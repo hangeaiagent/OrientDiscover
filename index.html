@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方向探索派对智能工具</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部导航 -->
+        <header class="header">
+            <h1>🧭 方向探索派对</h1>
+            <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+        </header>
+
+        <!-- 设置面板 -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="setting-group">
+                <label>分段距离:</label>
+                <select id="segmentDistance" onchange="updateSettings()">
+                    <option value="50">50km</option>
+                    <option value="100" selected>100km</option>
+                    <option value="200">200km</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>模式:</label>
+                <select id="timeMode" onchange="updateSettings()">
+                    <option value="present" selected>现代模式</option>
+                    <option value="past">过去模式 (100年前)</option>
+                    <option value="future">未来模式 (彩蛋)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>速度 (km/h):</label>
+                <input type="number" id="speed" value="120" min="1" max="1000" onchange="updateSettings()">
+            </div>
+        </div>
+
+        <!-- 状态显示区 -->
+        <div class="status-section">
+            <div class="location-info">
+                <div class="current-location">
+                    <span class="label">当前位置:</span>
+                    <span id="currentLocation">获取中...</span>
+                </div>
+                <div class="compass-info">
+                    <span class="label">朝向:</span>
+                    <span id="compassDirection">--°</span>
+                </div>
+            </div>
+            
+            <!-- 指南针显示 -->
+            <div class="compass-container">
+                <div class="compass" id="compass">
+                    <div class="compass-needle" id="compassNeedle"></div>
+                    <div class="compass-directions">
+                        <div class="direction north">N</div>
+                        <div class="direction east">E</div>
+                        <div class="direction south">S</div>
+                        <div class="direction west">W</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="controls">
+            <button class="explore-btn" id="exploreBtn" onclick="startExploration()">
+                🚀 开始探索
+            </button>
+            <button class="refresh-btn" onclick="refreshLocation()">
+                📍 刷新位置
+            </button>
+        </div>
+
+        <!-- 地点卡片容器 -->
+        <div class="places-container" id="placesContainer">
+            <!-- 地点卡片将在这里动态生成 -->
+        </div>
+
+        <!-- 加载指示器 -->
+        <div class="loading" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>正在计算路径...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
