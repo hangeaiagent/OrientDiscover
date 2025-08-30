@@ -85,16 +85,12 @@ class RealDataService:
         # 直接使用高德地图API搜索景点
         print(f"使用高德地图API搜索坐标 ({lat:.4f}, {lon:.4f}) 附近的景点...")
         
-        # 搜索不同类型的景点
+        # 搜索不同类型的景点（减少请求次数，避免超限）
         poi_types = [
-            "风景名胜",  # 风景名胜
+            "风景名胜",  # 风景名胜（包括各类景点）
             "公园广场",  # 公园
             "文物古迹",  # 古迹
-            "博物馆",    # 博物馆
-            "寺庙道观",  # 寺庙
-            "展览馆",    # 展览馆
-            "科教文化服务",  # 文化场所
-            "旅游景点"   # 旅游景点
+            "博物馆"     # 博物馆
         ]
         
         for poi_type in poi_types:
@@ -106,38 +102,43 @@ class RealDataService:
                 )
                 
                 for poi in amap_pois:
-                    if poi['name'] not in added_names and len(attractions) < 5:
-                        # 解析POI的经纬度
-                        poi_location = poi.get('location', '').split(',')
-                        if len(poi_location) == 2:
-                            poi_lon, poi_lat = float(poi_location[0]), float(poi_location[1])
-                        else:
+                    poi_name = poi.get('name', '')
+                    
+                    # 过滤行政区域和重复的景点
+                    if poi_name and poi_name not in added_names and len(attractions) < 5:
+                        # 验证是否为有效景点（过滤行政区域）
+                        if not self.is_valid_location_info({'name': poi_name, 'type': poi.get('category', '')}):
+                            continue
+                        
+                        # POI数据已经包含解析好的坐标
+                        poi_lat = poi.get('latitude')
+                        poi_lon = poi.get('longitude')
+                        
+                        if not poi_lat or not poi_lon:
                             continue
                         
                         # 计算距离
                         distance_to_point = self.calculate_distance(lat, lon, poi_lat, poi_lon)
                         
-                        # 生成景点详细信息
-                        attraction_details = self.generate_attraction_details_from_poi(poi, time_mode)
-                        
+                        # 使用POI提供的详细信息
                         place_info = {
-                            'name': poi['name'],
+                            'name': poi_name,
                             'latitude': poi_lat,
                             'longitude': poi_lon,
                             'distance': target_distance,
-                            'description': f"距离目标点{distance_to_point:.1f}km - {poi.get('name')}，{poi.get('address', '')}",
-                            'image': attraction_details['image'],
-                            'country': '中国',
-                            'city': poi.get('cityname', '当地'),
-                            'opening_hours': attraction_details['opening_hours'],
-                            'ticket_price': attraction_details['ticket_price'],
-                            'booking_method': attraction_details['booking_method'],
-                            'category': poi.get('type', '景点').split(';')[0]
+                            'description': f"距离目标点{distance_to_point:.1f}km - {poi.get('description', poi_name)}",
+                            'image': poi.get('image', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400'),
+                            'country': poi.get('country', '中国'),
+                            'city': poi.get('city', poi.get('district', '当地')),
+                            'opening_hours': poi.get('opening_hours', '08:00-17:30'),
+                            'ticket_price': poi.get('ticket_price', '请咨询景点'),
+                            'booking_method': poi.get('booking_method', '现场购票'),
+                            'category': poi.get('category', '景点')
                         }
                         attractions.append(place_info)
-                        added_names.add(poi['name'])
+                        added_names.add(poi_name)
                         
-                        print(f"高德地图找到景点: {poi['name']} ({poi_type})")
+                        print(f"高德地图找到景点: {poi_name} ({poi_type})")
                         
             except Exception as e:
                 print(f"高德地图API搜索 {poi_type} 失败: {e}")
