@@ -90,7 +90,8 @@ class AmapService:
                     'ticket_price': self._estimate_ticket_price(poi),
                     'booking_method': self._get_booking_method(poi),
                     'image': self._get_poi_image(poi),
-                    'distance': poi.get('distance', 0),
+                    'photos': poi.get('photos', []),  # 保留原始图片数组
+                    'distance': float(poi.get('distance', 0)),  # 确保是数字类型
                     'country': '中国'
                 }
                 
@@ -211,7 +212,23 @@ class AmapService:
     
     def _get_poi_image(self, poi: Dict) -> str:
         """获取POI图片"""
-        # 高德地图API可能包含图片信息，这里使用默认图片
+        # 首先尝试从高德地图API获取真实图片
+        photos = poi.get('photos', [])
+        if photos and len(photos) > 0:
+            # 选择第一张图片
+            photo = photos[0]
+            if isinstance(photo, dict) and 'url' in photo:
+                return photo['url']
+            elif isinstance(photo, str):
+                # 有时候photos可能直接是URL字符串数组
+                return photo
+        
+        # 其次尝试从biz_ext中获取图片
+        biz_ext = poi.get('biz_ext', {})
+        if 'pic_info' in biz_ext:
+            return biz_ext['pic_info']
+        
+        # 如果没有图片，根据POI类型提供默认图片
         poi_type = poi.get('type', '')
         
         if '风景名胜' in poi_type or '公园' in poi_type:

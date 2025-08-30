@@ -84,6 +84,7 @@ class RealDataService:
         
         # 直接使用高德地图API搜索景点
         print(f"使用高德地图API搜索坐标 ({lat:.4f}, {lon:.4f}) 附近的景点...")
+        print(f"目标点距离用户: {target_distance}km")
         
         # 搜索不同类型的景点（减少请求次数，避免超限）
         poi_types = [
@@ -117,16 +118,25 @@ class RealDataService:
                         if not poi_lat or not poi_lon:
                             continue
                         
-                        # 计算距离
-                        distance_to_point = self.calculate_distance(lat, lon, poi_lat, poi_lon)
+                        # 使用高德地图返回的距离（米转换为公里）
+                        amap_distance = poi.get('distance', 0)
+                        # 确保距离是数字
+                        if isinstance(amap_distance, str):
+                            try:
+                                amap_distance = float(amap_distance)
+                            except:
+                                amap_distance = 0
+                        
+                        # 高德返回的距离单位是米，转换为公里
+                        distance_in_km = amap_distance / 1000.0
                         
                         # 使用POI提供的详细信息
                         place_info = {
                             'name': poi_name,
                             'latitude': poi_lat,
                             'longitude': poi_lon,
-                            'distance': target_distance,
-                            'description': f"距离目标点{distance_to_point:.1f}km - {poi.get('description', poi_name)}",
+                            'distance': target_distance,  # 这是用户到目标点的距离
+                            'description': f"距此约{distance_in_km:.1f}公里 - {poi.get('description', poi_name)}",
                             'image': poi.get('image', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400'),
                             'country': poi.get('country', '中国'),
                             'city': poi.get('city', poi.get('district', '当地')),
@@ -139,6 +149,8 @@ class RealDataService:
                         added_names.add(poi_name)
                         
                         print(f"高德地图找到景点: {poi_name} ({poi_type})")
+                        print(f"  距离: {amap_distance}米 -> {distance_in_km:.1f}公里")
+                        print(f"  描述: {place_info['description']}")
                         
             except Exception as e:
                 print(f"高德地图API搜索 {poi_type} 失败: {e}")
@@ -217,7 +229,7 @@ class RealDataService:
                 'latitude': attraction_point['lat2'],
                 'longitude': attraction_point['lon2'],
                 'distance': target_distance,
-                'description': f"距离目标点{offset_km:.1f}km - {descriptions.get(time_mode, descriptions['present'])}",
+                'description': f"距此约{offset_km:.1f}公里 - {descriptions.get(time_mode, descriptions['present'])}",
                 'image': attraction_details['image'],
                 'country': '中国',
                 'city': '当地',

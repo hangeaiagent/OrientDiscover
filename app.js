@@ -286,7 +286,8 @@ function updateCompassDisplay(heading) {
     const directionText = document.getElementById('directionText');
     
     if (compassNeedle) {
-        compassNeedle.style.transform = `translateX(-50%) rotate(${heading}deg)`;
+        // 围绕中心旋转指南针
+        compassNeedle.style.transform = `translate(-50%, -50%) rotate(${heading}deg)`;
     }
     
     if (compassDirection) {

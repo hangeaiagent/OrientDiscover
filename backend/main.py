@@ -346,7 +346,7 @@ def find_nearby_attractions(points, time_mode, search_radius_km=5):
                     latitude=place_data['latitude'],
                     longitude=place_data['longitude'],
                     distance=target_distance,
-                    description=f"距离目标点{place_data['distance_to_target']:.1f}km - {place_data['description']}",
+                    description=f"距此约{place_data['distance_to_target']:.1f}公里 - {place_data['description']}",
                     image=place_data.get('image', attraction_info['image']),
                     country=place_data.get('country'),
                     city=place_data.get('city'),
@@ -410,7 +410,7 @@ def generate_virtual_attractions(point, time_mode, search_radius_km):
             latitude=attraction_point['lat2'],
             longitude=attraction_point['lon2'],
             distance=target_distance,
-            description=f"距离目标点{offset_km:.1f}km - {description}",
+            description=f"距此约{offset_km:.1f}公里 - {description}",
             image=attraction_info['image'],
             country=region_info['country'],
             city=region_info['city'],
@@ -757,7 +757,11 @@ async def explore_direction_real(request: ExploreRequest):
                 description=place_data['description'],
                 image=place_data.get('image'),
                 country=place_data.get('country'),
-                city=place_data.get('city')
+                city=place_data.get('city'),
+                opening_hours=place_data.get('opening_hours'),
+                ticket_price=place_data.get('ticket_price'),
+                booking_method=place_data.get('booking_method'),
+                category=place_data.get('category')
             )
             places.append(place_info)
         
