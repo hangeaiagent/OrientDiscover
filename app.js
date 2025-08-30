@@ -95,10 +95,97 @@ async function initializeApp() {
     // 初始化传感器
     initializeCompass();
     
+    // 初始化点击指南针功能
+    initializeCompassClick();
+    
     // 获取初始位置
     refreshLocation();
     
     logger.success('应用初始化完成');
+}
+
+// 初始化点击指南针功能
+function initializeCompassClick() {
+    const compass = document.getElementById('compass');
+    if (compass) {
+        // 添加点击事件
+        compass.style.cursor = 'pointer';
+        compass.addEventListener('click', function(event) {
+            const rect = compass.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            // 计算点击位置相对于中心的角度
+            const x = event.clientX - centerX;
+            const y = event.clientY - centerY;
+            
+            // 计算角度（从北开始顺时针）
+            let angle = Math.atan2(x, -y) * (180 / Math.PI);
+            if (angle < 0) angle += 360;
+            
+            // 设置新的方向
+            currentHeading = Math.round(angle);
+            updateCompassDisplay(currentHeading);
+            logger.success(`通过点击设置方向: ${currentHeading}°`);
+            
+            // 隐藏手动输入框（如果存在）
+            const manualInput = document.querySelector('.manual-heading-input');
+            if (manualInput) {
+                manualInput.style.display = 'none';
+            }
+        });
+        
+        // 添加鼠标悬停提示
+        compass.title = '点击设置方向';
+    }
+}
+
+// 启用手动输入方向功能
+function enableManualHeadingInput() {
+    logger.info('启用手动方向输入模式');
+    
+    // 查找合适的位置插入手动输入控件
+    const statusDisplay = document.querySelector('.status-display');
+    const compassContainer = document.querySelector('.compass-container');
+    const targetElement = compassContainer || statusDisplay;
+    
+    if (targetElement && !document.querySelector('.manual-heading-input')) {
+        const manualInput = document.createElement('div');
+        manualInput.className = 'manual-heading-input';
+        manualInput.style.cssText = 'background: #fff3cd; border: 1px solid #ffecc0; border-radius: 8px; padding: 15px; margin: 10px 0;';
+        manualInput.innerHTML = `
+            <p style="color: #856404; margin: 0 0 10px 0; font-weight: bold;">📍 无法自动获取方向</p>
+            <p style="color: #856404; margin: 0 0 10px 0;">请点击指南针设置方向，或手动输入：</p>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="number" id="manualHeading" min="0" max="359" value="${currentHeading || 0}" 
+                       placeholder="方向角度" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 120px;">
+                <button onclick="setManualHeading()" style="padding: 8px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">设置</button>
+            </div>
+            <p style="font-size: 12px; color: #666; margin: 10px 0 0 0;">💡 提示：0°=北, 90°=东, 180°=南, 270°=西</p>
+        `;
+        targetElement.parentNode.insertBefore(manualInput, targetElement.nextSibling);
+    }
+}
+
+// 设置手动方向
+window.setManualHeading = function() {
+    const input = document.getElementById('manualHeading');
+    if (input) {
+        const heading = parseInt(input.value);
+        if (!isNaN(heading) && heading >= 0 && heading <= 359) {
+            currentHeading = heading;
+            updateCompassDisplay(heading);
+            logger.success(`手动设置方向: ${heading}°`);
+            
+            // 隐藏输入框
+            const manualInput = document.querySelector('.manual-heading-input');
+            if (manualInput) {
+                manualInput.style.display = 'none';
+            }
+        } else {
+            logger.error('请输入有效的方向角度 (0-359)');
+        }
+    }
 }
 
 function checkBrowserSupport() {
@@ -112,29 +199,67 @@ async function requestPermissions() {
         // 请求地理位置权限
         if ('permissions' in navigator) {
             const geoPermission = await navigator.permissions.query({name: 'geolocation'});
-            console.log('地理位置权限状态:', geoPermission.state);
+            logger.info(`地理位置权限状态: ${geoPermission.state}`);
         }
         
         // 请求设备方向权限 (iOS 13+)
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            logger.info('检测到iOS设备，需要请求方向权限');
+            try {
             const permission = await DeviceOrientationEvent.requestPermission();
+                logger.info(`设备方向权限: ${permission}`);
             if (permission !== 'granted') {
+                    logger.warning('需要设备方向权限才能使用指南针功能');
                 showError('需要设备方向权限才能使用指南针功能');
+                }
+            } catch (error) {
+                logger.error('设备方向权限请求失败: ' + error.message);
             }
+        } else {
+            logger.info('设备支持方向检测，无需额外权限');
         }
     } catch (error) {
-        console.error('权限请求失败:', error);
+        logger.error('权限请求失败: ' + error.message);
     }
 }
 
 function initializeCompass() {
+    logger.info('初始化指南针...');
+    
     // 监听设备方向变化
     if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', handleOrientation, true);
-        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        logger.info('设备支持方向检测，正在添加事件监听器...');
+        
+        // 添加deviceorientation事件监听
+        window.addEventListener('deviceorientation', function(event) {
+            if (event.alpha !== null || event.webkitCompassHeading !== undefined) {
+                logger.success('方向事件触发成功');
+                handleOrientation(event);
+            } else {
+                logger.warning('方向事件触发但没有数据');
+            }
+        }, true);
+        
+        // 添加deviceorientationabsolute事件监听（某些设备）
+        window.addEventListener('deviceorientationabsolute', function(event) {
+            if (event.absolute && event.alpha !== null) {
+                logger.info('绝对方向事件触发');
+                handleOrientation(event);
+            }
+        }, true);
+        
+        // 测试是否能获取方向
+        setTimeout(() => {
+            if (currentHeading === 0) {
+                logger.warning('未检测到方向数据，可能需要移动设备或检查权限');
+                // 提供手动输入方向的选项
+                enableManualHeadingInput();
+            }
+        }, 1000);  // 缩短到1秒
     } else {
-        console.warn('设备不支持方向检测');
+        logger.error('设备不支持方向检测');
         showError('设备不支持方向检测功能');
+        enableManualHeadingInput();
     }
 }
 
@@ -339,10 +464,12 @@ async function startExploration() {
         return;
     }
     
-    if (currentHeading === null || currentHeading === undefined) {
-        const errorMsg = '请确保设备支持方向检测';
+    if (currentHeading === null || currentHeading === undefined || currentHeading === 0) {
+        const errorMsg = '未检测到方向信息，请移动设备或手动输入方向';
         logger.error(errorMsg);
         showError(errorMsg);
+        // 尝试启用手动输入
+        enableManualHeadingInput();
         return;
     }
     

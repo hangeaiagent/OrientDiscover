@@ -1,0 +1,26 @@
+[build]
+  # 构建命令（如果需要）
+  command = ""
+  # 发布目录
+  publish = "."
+
+[dev]
+  # 开发服务器配置
+  command = "python3 start_backend.py & python3 start_frontend.py"
+  targetPort = 8080
+  port = 8888
+  publish = "."
+  autoLaunch = false
+
+# API代理配置
+[[redirects]]
+  from = "/api/*"
+  to = "http://localhost:8000/api/:splat"
+  status = 200
+  force = true
+
+# 静态文件服务
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
