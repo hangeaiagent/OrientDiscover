@@ -17,21 +17,22 @@
         <!-- 设置面板 -->
         <div class="settings-panel" id="settingsPanel">
             <div class="setting-group">
-                <label>分段距离:</label>
+                <label>目标距离:</label>
                 <select id="segmentDistance" onchange="updateSettings()">
-                    <option value="50">50km</option>
-                    <option value="100" selected>100km</option>
-                    <option value="200">200km</option>
+                    <option value="5">5km</option>
+                    <option value="10" selected>10km</option>
+                    <option value="15">15km</option>
+                    <option value="20">20km</option>
                 </select>
             </div>
             <div class="setting-group">
                 <label>模式:</label>
                 <select id="timeMode" onchange="updateSettings()">
                     <option value="present" selected>现代模式</option>
-                    <option value="past">过去模式 (100年前)</option>
-                    <option value="future">未来模式 (彩蛋)</option>
+                    <option value="past">古代模式</option>
                 </select>
             </div>
+
             <div class="setting-group">
                 <label>速度 (km/h):</label>
                 <input type="number" id="speed" value="120" min="1" max="1000" onchange="updateSettings()">
@@ -45,9 +46,21 @@
                     <span class="label">当前位置:</span>
                     <span id="currentLocation">获取中...</span>
                 </div>
+                <div class="coordinates-info">
+                    <span class="label">经纬度:</span>
+                    <span id="coordinates">--°, --°</span>
+                </div>
+                <div class="accuracy-info">
+                    <span class="label">精度:</span>
+                    <span id="accuracy">--m</span>
+                </div>
                 <div class="compass-info">
                     <span class="label">朝向:</span>
                     <span id="compassDirection">--°</span>
+                </div>
+                <div class="direction-text">
+                    <span class="label">方向:</span>
+                    <span id="directionText">--</span>
                 </div>
             </div>
             
@@ -84,6 +97,17 @@
         <div class="loading" id="loading" style="display: none;">
             <div class="spinner"></div>
             <p>正在计算路径...</p>
+        </div>
+
+        <!-- 日志显示区 -->
+        <div class="log-section">
+            <div class="log-header">
+                <h3>系统日志</h3>
+                <button class="clear-log-btn" onclick="clearLogs()">清空日志</button>
+            </div>
+            <div class="log-container" id="logContainer">
+                <!-- 日志信息将在这里显示 -->
+            </div>
         </div>
     </div>
 

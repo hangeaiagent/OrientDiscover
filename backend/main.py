@@ -6,6 +6,8 @@ import math
 from geographiclib.geodesic import Geodesic
 import json
 import os
+import asyncio
+from real_data_service import real_data_service
 
 app = FastAPI(title="方向探索派对API", version="1.0.0")
 
@@ -36,6 +38,10 @@ class PlaceInfo(BaseModel):
     image: Optional[str] = None
     country: Optional[str] = None
     city: Optional[str] = None
+    opening_hours: Optional[str] = None
+    ticket_price: Optional[str] = None
+    booking_method: Optional[str] = None
+    category: Optional[str] = None
 
 class ExploreResponse(BaseModel):
     places: List[PlaceInfo]
@@ -142,6 +148,69 @@ def load_places_data():
                 "city": "雷克雅未克",
                 "description": "世界最北的首都，极光和地热温泉的天堂。",
                 "image": "https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=400"
+            },
+            {
+                "name": "首尔",
+                "latitude": 37.5665,
+                "longitude": 126.9780,
+                "country": "韩国",
+                "city": "首尔",
+                "description": "现代科技与传统文化并存的活力都市，K-pop和韩流文化的发源地。",
+                "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400"
+            },
+            {
+                "name": "上海",
+                "latitude": 31.2304,
+                "longitude": 121.4737,
+                "country": "中国",
+                "city": "上海",
+                "description": "国际化大都市，东方明珠塔和外滩的璀璨夜景令人难忘。",
+                "image": "https://images.unsplash.com/photo-1545893835-abaa50cbe628?w=400"
+            },
+            {
+                "name": "香港",
+                "latitude": 22.3193,
+                "longitude": 114.1694,
+                "country": "中国",
+                "city": "香港",
+                "description": "东西方文化交融的国际金融中心，维多利亚港的夜景世界闻名。",
+                "image": "https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=400"
+            },
+            {
+                "name": "曼谷",
+                "latitude": 13.7563,
+                "longitude": 100.5018,
+                "country": "泰国",
+                "city": "曼谷",
+                "description": "佛教文化浓厚的热带都市，金碧辉煌的寺庙和热闹的水上市场。",
+                "image": "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=400"
+            },
+            {
+                "name": "孟买",
+                "latitude": 19.0760,
+                "longitude": 72.8777,
+                "country": "印度",
+                "city": "孟买",
+                "description": "印度的商业首都，宝莱坞电影工业的中心，充满活力和色彩。",
+                "image": "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=400"
+            },
+            {
+                "name": "莫斯科",
+                "latitude": 55.7558,
+                "longitude": 37.6176,
+                "country": "俄罗斯",
+                "city": "莫斯科",
+                "description": "红场和克里姆林宫见证着俄罗斯的历史变迁，冬日雪景如童话世界。",
+                "image": "https://images.unsplash.com/photo-1513326738677-b964603b136d?w=400"
+            },
+            {
+                "name": "开罗",
+                "latitude": 30.0444,
+                "longitude": 31.2357,
+                "country": "埃及",
+                "city": "开罗",
+                "description": "古老的金字塔和狮身人面像守护着这座千年古城。",
+                "image": "https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=400"
             }
         ],
         "past": [
@@ -236,47 +305,346 @@ def calculate_great_circle_points(start_lat, start_lon, heading, max_distance, s
     
     return points
 
-def find_nearest_places(points, time_mode):
-    """为每个点找到最近的地点"""
+def find_nearby_attractions(points, time_mode, search_radius_km=5):
+    """在目标点周围搜索景点"""
     places = []
     available_places = places_data.get(time_mode, places_data["present"])
     
     for point in points:
-        if point['distance'] == 0:  # 跳过起始点
-            continue
-            
-        min_distance = float('inf')
-        nearest_place = None
+        target_lat = point['latitude']
+        target_lon = point['longitude']
+        target_distance = point['distance']
+        
+        # 在目标点周围搜索景点
+        nearby_places = []
         
         for place_data in available_places:
-            # 计算到地点的距离
+            # 计算到目标点的距离
             distance_result = geod.Inverse(
-                point['latitude'], point['longitude'],
+                target_lat, target_lon,
                 place_data['latitude'], place_data['longitude']
             )
             distance_km = distance_result['s12'] / 1000  # 转换为公里
             
-            if distance_km < min_distance:
-                min_distance = distance_km
-                nearest_place = place_data.copy()
-                nearest_place['actual_lat'] = point['latitude']
-                nearest_place['actual_lon'] = point['longitude']
-                nearest_place['distance_to_route'] = distance_km
+            # 如果在搜索半径内，添加到候选列表
+            if distance_km <= search_radius_km:
+                place_copy = place_data.copy()
+                place_copy['distance_to_target'] = distance_km
+                nearby_places.append(place_copy)
         
-        if nearest_place and min_distance < 1000:  # 只选择1000km内的地点
-            place_info = PlaceInfo(
-                name=nearest_place['name'],
-                latitude=point['latitude'],
-                longitude=point['longitude'],
-                distance=point['distance'],
-                description=nearest_place['description'],
-                image=nearest_place.get('image'),
-                country=nearest_place.get('country'),
-                city=nearest_place.get('city')
-            )
-            places.append(place_info)
+        # 按距离排序，选择最近的几个
+        nearby_places.sort(key=lambda x: x['distance_to_target'])
+        
+        # 如果找到了真实景点，使用它们
+        if nearby_places:
+            for i, place_data in enumerate(nearby_places[:3]):  # 最多3个景点
+                # 为真实景点生成详细信息
+                attraction_info = generate_attraction_details_for_real_place(place_data)
+                
+                place_info = PlaceInfo(
+                    name=place_data['name'],
+                    latitude=place_data['latitude'],
+                    longitude=place_data['longitude'],
+                    distance=target_distance,
+                    description=f"距离目标点{place_data['distance_to_target']:.1f}km - {place_data['description']}",
+                    image=place_data.get('image', attraction_info['image']),
+                    country=place_data.get('country'),
+                    city=place_data.get('city'),
+                    opening_hours=attraction_info['opening_hours'],
+                    ticket_price=attraction_info['ticket_price'],
+                    booking_method=attraction_info['booking_method'],
+                    category=attraction_info['category']
+                )
+                places.append(place_info)
+        else:
+            # 如果没有找到真实景点，生成虚拟景点（确保是景点类型）
+            virtual_places = generate_virtual_attractions(point, time_mode, search_radius_km)
+            # 过滤掉可能的行政区域信息
+            filtered_places = [place for place in virtual_places if is_valid_attraction_name(place.name)]
+            places.extend(filtered_places)
     
     return places
+
+def generate_virtual_attractions(point, time_mode, search_radius_km):
+    """为目标点生成虚拟景点"""
+    lat, lon = point['latitude'], point['longitude']
+    target_distance = point['distance']
+    
+    # 根据经纬度判断大致区域
+    region_info = get_region_info(lat, lon)
+    
+    # 生成3个虚拟景点
+    attractions = []
+    attraction_types = ['自然景观', '文化古迹', '城市地标']
+    
+    for i, attraction_type in enumerate(attraction_types):
+        # 在目标点周围随机生成景点位置
+        import random
+        offset_km = random.uniform(0.5, search_radius_km)
+        bearing = random.uniform(0, 360)
+        
+        # 计算景点坐标
+        attraction_point = geod.Direct(lat, lon, bearing, offset_km * 1000)
+        
+        # 根据时间模式和类型生成描述
+        descriptions = {
+            "present": {
+                '自然景观': f"这里是{region_info['name']}的一处美丽自然景观，拥有独特的地理风貌和生态环境。",
+                '文化古迹': f"位于{region_info['name']}的历史文化遗址，承载着丰富的历史文化内涵。",
+                '城市地标': f"{region_info['name']}的现代化地标建筑，展现了当地的发展成就。"
+            },
+            "past": {
+                '自然景观': f"一百年前，这里是{region_info['name']}的原始自然景观，保持着最初的生态面貌。",
+                '文化古迹': f"古代{region_info['name']}的重要文化遗址，见证了历史的兴衰变迁。",
+                '城市地标': f"过去的{region_info['name']}重要建筑，曾是当地的政治或商业中心。"
+            }
+        }
+        
+        # 生成详细信息
+        attraction_info = generate_attraction_details(attraction_type, time_mode, region_info)
+        attraction_name = f"{region_info['name']}{attraction_type}{i+1}"
+        description = descriptions.get(time_mode, descriptions["present"])[attraction_type]
+        
+        place_info = PlaceInfo(
+            name=attraction_name,
+            latitude=attraction_point['lat2'],
+            longitude=attraction_point['lon2'],
+            distance=target_distance,
+            description=f"距离目标点{offset_km:.1f}km - {description}",
+            image=attraction_info['image'],
+            country=region_info['country'],
+            city=region_info['city'],
+            opening_hours=attraction_info['opening_hours'],
+            ticket_price=attraction_info['ticket_price'],
+            booking_method=attraction_info['booking_method'],
+            category=attraction_type
+        )
+        attractions.append(place_info)
+    
+    return attractions
+
+def is_valid_attraction_name(name: str) -> bool:
+    """验证是否为有效的景点名称（非行政区域）"""
+    name_lower = name.lower()
+    
+    # 行政区域关键词
+    administrative_keywords = [
+        '区', '市', '县', '省', '街道', '镇', '乡', '村', '路', '街',
+        'district', 'city', 'county', 'province', 'street', 'road',
+        '行政区', '管辖区', '辖区', '开发区', '新区'
+    ]
+    
+    # 景点关键词
+    attraction_keywords = [
+        '陵', '寺', '庙', '宫', '园', '山', '湖', '塔', '桥', '城', '馆', '院',
+        '景区', '景点', '风景', '名胜', '古迹', '遗址', '博物', '纪念', '公园',
+        'temple', 'palace', 'park', 'mountain', 'lake', 'tower', 'museum',
+        'attraction', 'scenic', 'monument', 'memorial'
+    ]
+    
+    # 检查是否包含景点关键词
+    has_attraction_keyword = any(keyword in name_lower for keyword in attraction_keywords)
+    
+    # 检查是否为行政区域
+    is_administrative = any(keyword in name_lower for keyword in administrative_keywords)
+    
+    # 如果明确包含景点关键词，认为是有效景点
+    if has_attraction_keyword:
+        return True
+    
+    # 如果是行政区域，过滤掉
+    if is_administrative:
+        return False
+    
+    return True
+
+def generate_attraction_details(attraction_type, time_mode, region_info):
+    """生成景点的详细信息"""
+    import random
+    
+    # 根据景点类型和时间模式生成信息
+    details = {
+        "自然景观": {
+            "present": {
+                "opening_hours": "全天开放",
+                "ticket_price": "免费",
+                "booking_method": "无需预约，直接前往",
+                "images": [
+                    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
+                    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
+                    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400"
+                ]
+            },
+            "past": {
+                "opening_hours": "日出至日落",
+                "ticket_price": "免费",
+                "booking_method": "古代无需门票，自由游览",
+                "images": [
+                    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
+                    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400"
+                ]
+            }
+        },
+        "文化古迹": {
+            "present": {
+                "opening_hours": "09:00-17:00（周一闭馆）",
+                "ticket_price": f"成人票：{random.choice(['30', '50', '80', '120'])}元",
+                "booking_method": "现场购票或官方网站预约",
+                "images": [
+                    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=400",
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
+                ]
+            },
+            "past": {
+                "opening_hours": "古代全天开放",
+                "ticket_price": "古代免费参观",
+                "booking_method": "古代无需预约",
+                "images": [
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
+                    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=400"
+                ]
+            }
+        },
+        "城市地标": {
+            "present": {
+                "opening_hours": "10:00-22:00",
+                "ticket_price": f"观景台：{random.choice(['60', '80', '100', '150'])}元",
+                "booking_method": "现场购票、手机APP或官方网站",
+                "images": [
+                    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400",
+                    "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400"
+                ]
+            },
+            "past": {
+                "opening_hours": "古代建筑全天可观赏",
+                "ticket_price": "古代免费参观",
+                "booking_method": "古代无需预约",
+                "images": [
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400",
+                    "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400"
+                ]
+            }
+        }
+    }
+    
+    type_details = details.get(attraction_type, details["自然景观"])
+    mode_details = type_details.get(time_mode, type_details["present"])
+    
+    return {
+        "opening_hours": mode_details["opening_hours"],
+        "ticket_price": mode_details["ticket_price"],
+        "booking_method": mode_details["booking_method"],
+        "image": random.choice(mode_details["images"])
+    }
+
+def generate_attraction_details_for_real_place(place_data):
+    """为真实景点生成详细信息"""
+    import random
+    
+    # 根据景点名称推测类型
+    name = place_data['name'].lower()
+    if any(word in name for word in ['山', '湖', '河', '海', '森林', '公园', '自然', '风景']):
+        category = '自然景观'
+    elif any(word in name for word in ['寺', '庙', '宫', '城', '古', '遗址', '博物馆', '纪念']):
+        category = '文化古迹'
+    else:
+        category = '城市地标'
+    
+    # 生成合理的营业信息
+    if category == '自然景观':
+        opening_hours = random.choice([
+            "全天开放",
+            "06:00-18:00",
+            "日出至日落"
+        ])
+        ticket_price = random.choice([
+            "免费",
+            "成人票：20元",
+            "成人票：30元"
+        ])
+        booking_method = "无需预约，直接前往"
+        image = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400"
+        
+    elif category == '文化古迹':
+        opening_hours = random.choice([
+            "09:00-17:00（周一闭馆）",
+            "08:30-17:30",
+            "09:00-16:30（冬季）"
+        ])
+        ticket_price = f"成人票：{random.choice(['40', '60', '80', '100'])}元"
+        booking_method = random.choice([
+            "现场购票或官方网站预约",
+            "建议提前网上预约",
+            "现场购票，旺季建议预约"
+        ])
+        image = "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=400"
+        
+    else:  # 城市地标
+        opening_hours = random.choice([
+            "10:00-22:00",
+            "09:00-21:00",
+            "全天开放（外观）"
+        ])
+        ticket_price = f"观景台：{random.choice(['50', '80', '120', '150'])}元"
+        booking_method = random.choice([
+            "现场购票、手机APP或官方网站",
+            "支持现场购票和在线预订",
+            "建议提前在线购票"
+        ])
+        image = "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400"
+    
+    return {
+        "opening_hours": opening_hours,
+        "ticket_price": ticket_price,
+        "booking_method": booking_method,
+        "category": category,
+        "image": image
+    }
+
+def generate_virtual_place(point, time_mode):
+    """为没有匹配地点的路径点生成虚拟地点信息"""
+    lat, lon = point['latitude'], point['longitude']
+    
+    # 根据经纬度判断大致区域
+    region_info = get_region_info(lat, lon)
+    
+    # 根据时间模式生成不同的描述
+    descriptions = {
+        "present": f"这里是{region_info['name']}的一片神秘土地，等待着探索者的发现。现代文明的痕迹在这里若隐若现。",
+        "past": f"一百年前，这里是{region_info['name']}的荒野之地，只有少数勇敢的探险家曾经踏足。",
+        "future": f"未来的{region_info['name']}，这里可能建立起新的城市，或成为重要的科研基地。"
+    }
+    
+    return PlaceInfo(
+        name=f"{region_info['name']}神秘之地",
+        latitude=lat,
+        longitude=lon,
+        distance=point['distance'],
+        description=descriptions.get(time_mode, descriptions["present"]),
+        image="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
+        country=region_info['country'],
+        city=region_info['city']
+    )
+
+def get_region_info(lat, lon):
+    """根据经纬度获取区域信息"""
+    # 简单的区域判断逻辑
+    if lat > 60:
+        return {"name": "北极", "country": "极地", "city": "极地"}
+    elif lat < -60:
+        return {"name": "南极", "country": "极地", "city": "极地"}
+    elif -30 <= lat <= 70 and -10 <= lon <= 60:
+        return {"name": "欧亚大陆", "country": "欧亚", "city": "未知"}
+    elif -30 <= lat <= 50 and 60 <= lon <= 150:
+        return {"name": "亚洲内陆", "country": "亚洲", "city": "未知"}
+    elif -50 <= lat <= 40 and -180 <= lon <= -30:
+        return {"name": "美洲大陆", "country": "美洲", "city": "未知"}
+    elif -40 <= lat <= 10 and 110 <= lon <= 180:
+        return {"name": "大洋洲", "country": "大洋洲", "city": "未知"}
+    elif -40 <= lat <= 40 and -20 <= lon <= 60:
+        return {"name": "非洲大陆", "country": "非洲", "city": "未知"}
+    else:
+        return {"name": "海洋", "country": "海洋", "city": "海域"}
 
 @app.on_event("startup")
 async def startup_event():
@@ -305,20 +673,26 @@ async def explore_direction(request: ExploreRequest):
         if request.segment_distance <= 0:
             raise HTTPException(status_code=400, detail="分段距离必须大于0")
         
-        # 计算最大距离（地球周长的一半，约20000km）
-        max_distance = 20000
+        # 只计算到目标距离点
+        target_distance = request.segment_distance
         
-        # 计算大圆航线上的点
-        points = calculate_great_circle_points(
+        # 计算目标距离点的坐标
+        target_point = geod.Direct(
             request.latitude, 
             request.longitude, 
             request.heading, 
-            max_distance, 
-            request.segment_distance
+            target_distance * 1000  # 转换为米
         )
         
-        # 找到最近的地点
-        places = find_nearest_places(points, request.time_mode)
+        # 创建目标点
+        points = [{
+            'latitude': target_point['lat2'],
+            'longitude': target_point['lon2'],
+            'distance': target_distance
+        }]
+        
+        # 在目标点周围5km范围内搜索景点
+        places = find_nearby_attractions(points, request.time_mode, search_radius_km=5)
         
         # 计算总距离
         total_distance = points[-1]['distance'] if points else 0
@@ -333,6 +707,76 @@ async def explore_direction(request: ExploreRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")
+
+@app.post("/api/explore-real", response_model=ExploreResponse)
+async def explore_direction_real(request: ExploreRequest):
+    """探索指定方向的地点（使用真实数据）"""
+    import time
+    start_time = time.time()
+    
+    try:
+        # 验证输入参数
+        if not (-90 <= request.latitude <= 90):
+            raise HTTPException(status_code=400, detail="纬度必须在-90到90之间")
+        if not (-180 <= request.longitude <= 180):
+            raise HTTPException(status_code=400, detail="经度必须在-180到180之间")
+        if not (0 <= request.heading < 360):
+            raise HTTPException(status_code=400, detail="方向必须在0到360度之间")
+        if request.segment_distance <= 0:
+            raise HTTPException(status_code=400, detail="分段距离必须大于0")
+        
+        # 只计算到目标距离点
+        target_distance = request.segment_distance
+        
+        # 计算目标距离点的坐标
+        target_point = geod.Direct(
+            request.latitude, 
+            request.longitude, 
+            request.heading, 
+            target_distance * 1000  # 转换为米
+        )
+        
+        # 创建目标点
+        points = [{
+            'latitude': target_point['lat2'],
+            'longitude': target_point['lon2'],
+            'distance': target_distance
+        }]
+        
+        # 使用真实数据服务获取地点信息
+        places_data_list = await real_data_service.get_real_places_along_route(points, request.time_mode)
+        
+        # 转换为PlaceInfo对象
+        places = []
+        for place_data in places_data_list:
+            place_info = PlaceInfo(
+                name=place_data['name'],
+                latitude=place_data['latitude'],
+                longitude=place_data['longitude'],
+                distance=place_data['distance'],
+                description=place_data['description'],
+                image=place_data.get('image'),
+                country=place_data.get('country'),
+                city=place_data.get('city')
+            )
+            places.append(place_info)
+        
+        # 计算总距离
+        total_distance = points[-1]['distance'] if points else 0
+        
+        calculation_time = time.time() - start_time
+        
+        return ExploreResponse(
+            places=places,
+            total_distance=total_distance,
+            calculation_time=calculation_time
+        )
+        
+    except Exception as e:
+        print(f"真实数据探索错误: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"真实数据获取错误: {str(e)}")
 
 @app.get("/api/places/{time_mode}")
 async def get_places(time_mode: str):
