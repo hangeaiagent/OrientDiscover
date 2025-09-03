@@ -27,18 +27,34 @@ class GeminiImageService:
         # 确保输出目录存在
         os.makedirs(self.output_dir, exist_ok=True)
         
-    def generate_attraction_prompt(self, attraction_name: str, location: str = None) -> str:
+    def generate_attraction_prompt(
+        self, 
+        attraction_name: str, 
+        location: str = None,
+        category: str = None,
+        description: str = None,
+        opening_hours: str = None,
+        ticket_price: str = None,
+        latitude: float = None,
+        longitude: float = None
+    ) -> str:
         """
-        根据景点名称生成合影提示词
+        根据景点完整信息生成智能合影提示词
         
         Args:
             attraction_name: 景点名称
             location: 景点位置（城市或国家）
+            category: 景点类别
+            description: 景点描述
+            opening_hours: 开放时间
+            ticket_price: 门票价格
+            latitude: 纬度
+            longitude: 经度
             
         Returns:
-            生成的提示词
+            生成的智能提示词
         """
-        # 景点特定的提示词模板
+        # 景点特定的提示词模板（保留原有的特定景点）
         attraction_prompts = {
             # 中国景点
             "长城": "让图中的人站在万里长城上，背景是蜿蜒的长城和远山，穿着休闲旅游装，做出胜利的手势，天气晴朗，蓝天白云。保持人脸的原貌不变。",
@@ -72,15 +88,129 @@ class GeminiImageService:
             if key in attraction_name:
                 return prompt
         
-        # 如果没有找到特定景点，生成通用提示词
+        # 如果没有找到特定景点，基于详细信息生成智能提示词
+        return self._generate_intelligent_prompt(
+            attraction_name, location, category, description, 
+            opening_hours, ticket_price, latitude, longitude
+        )
+    
+    def _generate_intelligent_prompt(
+        self, 
+        attraction_name: str, 
+        location: str = None,
+        category: str = None,
+        description: str = None,
+        opening_hours: str = None,
+        ticket_price: str = None,
+        latitude: float = None,
+        longitude: float = None
+    ) -> str:
+        """
+        基于景点详细信息生成智能提示词
+        """
+        prompt_parts = []
+        
+        # 基础合影描述
         location_str = f"在{location}" if location else ""
-        return f"让图中的人站在{attraction_name}{location_str}前面拍照留念，背景是该景点的标志性建筑或景观，穿着适合旅游的休闲装，自然地微笑，天气晴朗。保持人脸的原貌和特征不变，只改变服装和背景。"
+        prompt_parts.append(f"让图中的人物与{attraction_name}{location_str}进行完美的合影合成。")
+        
+        # 根据类别确定背景风格
+        if category:
+            category_backgrounds = {
+                '寺庙': '庄严神圣的寺庙建筑，金碧辉煌的佛殿，古典的东方建筑风格，香火缭绕的神圣氛围',
+                '博物馆': '现代化的博物馆建筑外观，展现文化艺术的高雅氛围，知识殿堂的庄重感',
+                '公园': '美丽的自然公园景观，绿树成荫，花草繁茂，清新的空气和宁静的环境',
+                '古迹': '历史悠久的古代建筑遗迹，斑驳的石墙，深厚的历史文化底蕴',
+                '山峰': '雄伟壮观的山峰景色，云雾缭绕，气势磅礴的自然风光',
+                '海滩': '碧海蓝天的海滩风光，白沙细软，海浪轻拍，热带度假氛围',
+                '城市地标': '标志性的城市建筑，现代化的都市风光，繁华的城市天际线',
+                '自然景观': '壮美的自然风光，山川河流，原生态的自然环境',
+                '文化景点': '具有当地文化特色的建筑和环境，传统与现代的完美融合',
+                '购物': '繁华的商业街区，现代化的购物中心，充满活力的商业氛围',
+                '娱乐': '充满活力的娱乐场所，欢乐的游乐设施，热闹的娱乐氛围'
+            }
+            
+            for key, bg_desc in category_backgrounds.items():
+                if key in category:
+                    prompt_parts.append(f"背景是{bg_desc}。")
+                    break
+            else:
+                prompt_parts.append(f"背景是{attraction_name}的标志性景观和建筑。")
+        
+        # 根据描述添加具体细节
+        if description:
+            detail_keywords = {
+                '古老': '古朴典雅的建筑风格，历史的厚重感',
+                '现代': '现代化的建筑设计，时尚的都市风格',
+                '宏伟': '气势恢宏的建筑规模，令人震撼的视觉效果',
+                '精美': '精美细致的装饰细节，工艺精湛的艺术价值',
+                '壮观': '令人震撼的壮观景象，大自然的鬼斧神工',
+                '美丽': '风景如画的美丽环境，赏心悦目的自然风光',
+                '历史': '深厚的历史文化氛围，岁月沉淀的文化价值',
+                '神圣': '庄严神圣的宗教氛围，虔诚肃穆的精神感受',
+                '自然': '原生态的自然环境，天然未雕琢的纯净美感',
+                '繁华': '繁华热闹的都市景象，充满活力的现代生活'
+            }
+            
+            for keyword, enhancement in detail_keywords.items():
+                if keyword in description:
+                    prompt_parts.append(f"展现{enhancement}。")
+                    break
+        
+        # 根据位置添加地域特色服装和氛围
+        if location:
+            location_styles = {
+                '中国': '穿着中式休闲装或具有中国特色的服装，体现东方文化的优雅',
+                '日本': '穿着日式休闲装，体现日本文化的精致与和谐',
+                '法国': '穿着法式优雅的休闲装，体现法式浪漫与艺术气息',
+                '英国': '穿着英伦风格的服装，体现绅士淑女的优雅气质',
+                '美国': '穿着美式休闲装，体现自由活力的美式风格',
+                '意大利': '穿着意式时尚休闲装，体现地中海的浪漫风情',
+                '德国': '穿着简约实用的德式服装，体现严谨与品质',
+                '澳大利亚': '穿着轻松的夏装，体现阳光海滩的休闲氛围'
+            }
+            
+            for country, style in location_styles.items():
+                if country in location:
+                    prompt_parts.append(style)
+                    break
+            else:
+                prompt_parts.append(f"穿着适合{location}当地文化和气候的得体服装")
+        else:
+            prompt_parts.append("穿着适合旅游的休闲装")
+        
+        # 添加表情和姿态
+        prompt_parts.append("表情自然愉悦，姿态放松自然，展现出旅游的快乐心情。")
+        
+        # 根据开放时间推断最佳拍摄时间
+        time_atmosphere = "阳光明媚的白天"
+        if opening_hours:
+            if "夜" in opening_hours or "晚" in opening_hours:
+                time_atmosphere = "华灯初上的夜晚，灯光璀璨"
+            elif "早" in opening_hours:
+                time_atmosphere = "清晨的柔和阳光"
+            elif "黄昏" in opening_hours or "日落" in opening_hours:
+                time_atmosphere = "黄昏时分的金色光线"
+        
+        prompt_parts.append(f"拍摄时间：{time_atmosphere}，营造温馨浪漫的拍照氛围。")
+        
+        # 添加技术要求
+        prompt_parts.append("图片要求：高清画质，色彩饱和，构图协调，光线自然。")
+        prompt_parts.append("特别重要：完全保持人物的面部特征、肤色、发型、体型等所有个人特征不变，只改变服装风格和背景环境。")
+        
+        return "".join(prompt_parts)
     
     async def generate_attraction_photo(
         self, 
         user_photo: UploadFile,
         attraction_name: str,
         location: Optional[str] = None,
+        category: Optional[str] = None,
+        description: Optional[str] = None,
+        opening_hours: Optional[str] = None,
+        ticket_price: Optional[str] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
         custom_prompt: Optional[str] = None
     ) -> Tuple[bool, str, Optional[str]]:
         """
@@ -90,6 +220,12 @@ class GeminiImageService:
             user_photo: 用户上传的照片
             attraction_name: 景点名称
             location: 景点位置
+            category: 景点类别
+            description: 景点描述
+            opening_hours: 开放时间
+            ticket_price: 门票价格
+            latitude: 纬度
+            longitude: 经度
             custom_prompt: 自定义提示词（可选）
             
         Returns:
@@ -108,7 +244,16 @@ class GeminiImageService:
             if custom_prompt:
                 prompt = custom_prompt
             else:
-                prompt = self.generate_attraction_prompt(attraction_name, location)
+                prompt = self.generate_attraction_prompt(
+                    attraction_name=attraction_name,
+                    location=location,
+                    category=category,
+                    description=description,
+                    opening_hours=opening_hours,
+                    ticket_price=ticket_price,
+                    latitude=latitude,
+                    longitude=longitude
+                )
             
             logger.info(f"生成景点合影 - 景点: {attraction_name}, 提示词: {prompt}")
             

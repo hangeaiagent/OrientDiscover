@@ -1852,6 +1852,53 @@ body {
     }
 }
 
+/* 景点信息卡片样式 */
+.place-info-summary {
+    margin-bottom: 20px;
+}
+
+.place-info-card {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.place-info-card h4 {
+    margin: 0 0 12px 0;
+    color: #2d3748;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.place-info-card p {
+    margin: 8px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.info-category {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.info-location {
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.info-description {
+    color: #718096;
+    font-style: italic;
+}
+
+.prompt-hint {
+    font-size: 12px !important;
+    color: #999 !important;
+    margin-top: 8px !important;
+    font-style: italic;
+}
+
 /* 照片上传模态框样式 */
 .photo-upload-modal {
     position: fixed;
