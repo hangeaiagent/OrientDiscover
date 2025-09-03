@@ -769,7 +769,7 @@ function createPlaceCard(place, index) {
             </div>
             
             <div class="place-actions">
-                <button class="action-btn selfie-btn" onclick="openSelfieGenerator(${index}, '${place.name.replace(/'/g, "\\'")}'${place.city ? `, '${place.city.replace(/'/g, "\\'")}'` : `, '${place.country ? place.country.replace(/'/g, "\\'") : ""}'`})" title="生成景点合影">
+                <button class="action-btn selfie-btn" onclick="openSelfieGenerator(${index})" title="生成景点合影">
                     📸 生成合影
                 </button>
                 ${place.latitude && place.longitude ? `
@@ -3402,8 +3402,432 @@ function closeImageModal() {
     }
 }
 
+// 景点合影生成功能
+
+// 生成基于景点详细信息的智能提示词
+function generateIntelligentPrompt(place) {
+    const name = place.name || '景点';
+    const category = place.category || '';
+    const description = place.description || '';
+    const location = place.city || place.country || '';
+    const openingHours = place.opening_hours || '';
+    
+    // 基础提示词模板
+    let prompt = `请将图中的人物与${name}进行完美合影合成。`;
+    
+    // 根据景点类别添加特定描述
+    if (category) {
+        const categoryPrompts = {
+            '寺庙': '背景是庄严神圣的寺庙建筑，金碧辉煌的佛殿和古典的中式建筑风格',
+            '博物馆': '背景是现代化的博物馆建筑，展现文化艺术的氛围',
+            '公园': '背景是美丽的自然公园景观，绿树成荫，花草繁茂',
+            '古迹': '背景是历史悠久的古代建筑遗迹，展现深厚的历史文化底蕴',
+            '山峰': '背景是雄伟壮观的山峰景色，云雾缭绕，气势磅礴',
+            '海滩': '背景是碧海蓝天的海滩风光，白沙细软，海浪轻拍',
+            '城市地标': '背景是标志性的城市建筑，现代化的都市风光',
+            '自然景观': '背景是壮美的自然风光，山川河流，景色宜人',
+            '文化景点': '背景是具有文化特色的建筑和环境，体现当地文化特色',
+            '购物': '背景是繁华的商业街区或购物中心',
+            '娱乐': '背景是充满活力的娱乐场所'
+        };
+        
+        for (const [key, desc] of Object.entries(categoryPrompts)) {
+            if (category.includes(key)) {
+                prompt += `${desc}，`;
+                break;
+            }
+        }
+    }
+    
+    // 根据描述添加具体细节
+    if (description) {
+        // 提取描述中的关键特征
+        const keywords = {
+            '古老': '古朴典雅的建筑风格',
+            '现代': '现代化的建筑设计',
+            '宏伟': '气势恢宏的建筑规模',
+            '精美': '精美细致的装饰细节',
+            '壮观': '令人震撼的壮观景象',
+            '美丽': '风景如画的美丽环境',
+            '历史': '深厚的历史文化氛围',
+            '神圣': '庄严神圣的宗教氛围',
+            '自然': '原生态的自然环境',
+            '繁华': '繁华热闹的都市景象'
+        };
+        
+        for (const [keyword, enhancement] of Object.entries(keywords)) {
+            if (description.includes(keyword)) {
+                prompt += `展现${enhancement}，`;
+                break;
+            }
+        }
+    }
+    
+    // 根据位置添加地域特色
+    if (location) {
+        const locationStyles = {
+            '北京': '体现中国古都的皇家气派和传统文化',
+            '上海': '展现国际化大都市的现代繁华',
+            '西安': '彰显古丝绸之路的历史文化底蕴',
+            '杭州': '体现江南水乡的诗情画意',
+            '成都': '展现巴蜀文化的悠闲惬意',
+            '东京': '体现日式文化的精致与现代感',
+            '京都': '展现日本传统文化的优雅与禅意',
+            '巴黎': '体现法式浪漫与艺术气息',
+            '伦敦': '展现英伦风情与历史厚重感',
+            '纽约': '体现美式现代都市的活力与自由',
+            '罗马': '展现古罗马帝国的历史沧桑',
+            '悉尼': '体现澳洲海港城市的现代与自然和谐'
+        };
+        
+        for (const [city, style] of Object.entries(locationStyles)) {
+            if (location.includes(city)) {
+                prompt += `${style}，`;
+                break;
+            }
+        }
+    }
+    
+    // 添加人物处理要求
+    prompt += `人物穿着适合当地文化和气候的得体服装，表情自然愉悦，姿态放松自然。`;
+    
+    // 添加技术要求
+    prompt += `图片要求：高清画质，光线自然，色彩饱和，构图协调。特别重要：保持人物的面部特征、肤色、发型等个人特征完全不变，只改变服装和背景环境。`;
+    
+    // 添加氛围描述
+    const timePrompts = ['阳光明媚的白天', '温暖的午后阳光', '清晨的柔和光线', '黄昏的金色时光'];
+    const randomTime = timePrompts[Math.floor(Math.random() * timePrompts.length)];
+    prompt += `拍摄时间：${randomTime}，整体氛围温馨愉快，适合纪念留影。`;
+    
+    return prompt;
+}
+
+function openSelfieGenerator(placeIndex) {
+    // 从全局场景数据中获取完整的景点信息
+    const place = sceneManagement.allScenes[placeIndex];
+    if (!place) {
+        logger.error(`❌ 找不到索引为 ${placeIndex} 的景点信息`);
+        alert('景点信息获取失败，请重试');
+        return;
+    }
+    
+    const attractionName = place.name;
+    const location = place.city || place.country || '';
+    
+    logger.info(`打开合影生成器 - 景点: ${attractionName}, 位置: ${location || '未知'}`);
+    
+    // 生成基于景点详细信息的智能提示词
+    const intelligentPrompt = generateIntelligentPrompt(place);
+    
+    // 创建照片上传模态框
+    const modal = document.createElement('div');
+    modal.className = 'photo-upload-modal';
+    modal.innerHTML = `
+        <div class="photo-upload-content">
+            <div class="photo-upload-header">
+                <h3>📸 生成${attractionName}合影照片</h3>
+                <button class="close-btn" onclick="closeSelfieGenerator()">&times;</button>
+            </div>
+            
+            <div class="photo-upload-body">
+                <div class="place-info-summary">
+                    <div class="place-info-card">
+                        <h4>📍 ${attractionName}</h4>
+                        ${place.category ? `<p class="info-category">🏷️ ${place.category}</p>` : ''}
+                        ${location ? `<p class="info-location">🌍 ${location}</p>` : ''}
+                        ${place.description ? `<p class="info-description">${place.description.substring(0, 100)}${place.description.length > 100 ? '...' : ''}</p>` : ''}
+                    </div>
+                </div>
+                
+                <div class="upload-section">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-placeholder">
+                            <div class="upload-icon">📷</div>
+                            <p>点击或拖拽上传您的照片</p>
+                            <p class="upload-hint">支持 JPG, PNG 格式，建议人脸清晰的照片</p>
+                        </div>
+                        <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <div class="photo-preview" id="photoPreview" style="display: none;">
+                        <img id="previewImage" src="" alt="预览图片">
+                        <button class="change-photo-btn" onclick="changePhoto()">更换照片</button>
+                    </div>
+                </div>
+                
+                <div class="prompt-section">
+                    <label for="customPrompt">AI生成提示词（可编辑）：</label>
+                    <textarea id="customPrompt" rows="4">${intelligentPrompt}</textarea>
+                    <p class="prompt-hint">💡 提示词已根据景点信息智能生成，您可以根据需要进行修改</p>
+                </div>
+                
+                <div class="generate-section">
+                    <button class="generate-btn" id="generateBtn" onclick="generateAttractionPhoto(${placeIndex})" disabled>
+                        🎨 生成合影照片
+                    </button>
+                    <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>正在生成合影照片，请稍候...</p>
+                    </div>
+                </div>
+                
+                <div class="result-section" id="resultSection" style="display: none;">
+                    <h4>生成结果：</h4>
+                    <div class="result-image-container">
+                        <img id="resultImage" src="" alt="生成的合影照片">
+                        <div class="result-actions">
+                            <button class="download-btn" onclick="downloadGeneratedPhoto()">💾 下载照片</button>
+                            <button class="regenerate-btn" onclick="regeneratePhoto()">🔄 重新生成</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 存储当前景点信息供后续使用
+    window.currentAttractionInfo = place;
+    
+    // 设置上传区域事件
+    setupPhotoUpload();
+    
+    // 显示模态框
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+function closeSelfieGenerator() {
+    const modal = document.querySelector('.photo-upload-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
+    }
+}
+
+function setupPhotoUpload() {
+    const uploadArea = document.getElementById('uploadArea');
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+    const previewImage = document.getElementById('previewImage');
+    const generateBtn = document.getElementById('generateBtn');
+    
+    // 点击上传区域触发文件选择
+    uploadArea.addEventListener('click', () => {
+        photoInput.click();
+    });
+    
+    // 拖拽上传
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+    
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            handlePhotoSelect(files[0]);
+        }
+    });
+    
+    // 文件选择
+    photoInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handlePhotoSelect(e.target.files[0]);
+        }
+    });
+}
+
+function handlePhotoSelect(file) {
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+        alert('请选择有效的图片文件');
+        return;
+    }
+    
+    // 验证文件大小（限制为10MB）
+    if (file.size > 10 * 1024 * 1024) {
+        alert('图片文件过大，请选择小于10MB的图片');
+        return;
+    }
+    
+    // 读取并预览图片
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const previewImage = document.getElementById('previewImage');
+        const uploadArea = document.getElementById('uploadArea');
+        const photoPreview = document.getElementById('photoPreview');
+        const generateBtn = document.getElementById('generateBtn');
+        
+        previewImage.src = e.target.result;
+        uploadArea.style.display = 'none';
+        photoPreview.style.display = 'block';
+        generateBtn.disabled = false;
+        
+        // 存储文件以供后续使用
+        window.selectedPhotoFile = file;
+        
+        logger.success(`照片已选择: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function changePhoto() {
+    const uploadArea = document.getElementById('uploadArea');
+    const photoPreview = document.getElementById('photoPreview');
+    const generateBtn = document.getElementById('generateBtn');
+    const photoInput = document.getElementById('photoInput');
+    
+    uploadArea.style.display = 'block';
+    photoPreview.style.display = 'none';
+    generateBtn.disabled = true;
+    photoInput.value = '';
+    window.selectedPhotoFile = null;
+}
+
+async function generateAttractionPhoto(placeIndex) {
+    if (!window.selectedPhotoFile) {
+        alert('请先选择照片');
+        return;
+    }
+    
+    // 获取完整的景点信息
+    const place = window.currentAttractionInfo || sceneManagement.allScenes[placeIndex];
+    if (!place) {
+        alert('景点信息获取失败，请重试');
+        return;
+    }
+    
+    const generateBtn = document.getElementById('generateBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const customPrompt = document.getElementById('customPrompt').value.trim();
+    
+    try {
+        // 显示加载状态
+        generateBtn.disabled = true;
+        loadingIndicator.style.display = 'block';
+        
+        logger.info(`开始生成${place.name}合影照片...`);
+        
+        // 创建包含完整景点信息的FormData
+        const formData = new FormData();
+        formData.append('user_photo', window.selectedPhotoFile);
+        formData.append('attraction_name', place.name);
+        
+        // 传递完整的景点信息
+        if (place.city) formData.append('location', place.city);
+        else if (place.country) formData.append('location', place.country);
+        
+        if (place.category) formData.append('category', place.category);
+        if (place.description) formData.append('description', place.description);
+        if (place.opening_hours) formData.append('opening_hours', place.opening_hours);
+        if (place.ticket_price) formData.append('ticket_price', place.ticket_price);
+        
+        // 传递坐标信息
+        if (place.latitude) formData.append('latitude', place.latitude.toString());
+        if (place.longitude) formData.append('longitude', place.longitude.toString());
+        
+        // 自定义提示词（优先级最高）
+        if (customPrompt) {
+            formData.append('custom_prompt', customPrompt);
+        }
+        
+        // 调用后端API
+        const response = await fetch('/api/generate-attraction-photo', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || '生成失败');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 显示生成结果
+            showGeneratedPhoto(result.data);
+            logger.success(`✅ ${place.name}合影照片生成成功！`);
+        } else {
+            throw new Error(result.message || '生成失败');
+        }
+        
+    } catch (error) {
+        logger.error(`❌ 生成合影照片失败: ${error.message}`);
+        alert(`生成失败: ${error.message}`);
+    } finally {
+        // 隐藏加载状态
+        generateBtn.disabled = false;
+        loadingIndicator.style.display = 'none';
+    }
+}
+
+function showGeneratedPhoto(data) {
+    const resultSection = document.getElementById('resultSection');
+    const resultImage = document.getElementById('resultImage');
+    
+    // 显示生成的图片
+    resultImage.src = data.base64;
+    resultSection.style.display = 'block';
+    
+    // 存储结果数据以供下载使用
+    window.generatedPhotoData = data;
+    
+    // 滚动到结果区域
+    resultSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+function downloadGeneratedPhoto() {
+    if (!window.generatedPhotoData) {
+        alert('没有可下载的照片');
+        return;
+    }
+    
+    const data = window.generatedPhotoData;
+    
+    // 创建下载链接
+    const link = document.createElement('a');
+    link.href = data.base64;
+    link.download = data.filename || `${data.attraction}_合影_${new Date().getTime()}.png`;
+    
+    // 触发下载
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    logger.success(`📥 合影照片已下载: ${link.download}`);
+}
+
+function regeneratePhoto() {
+    const resultSection = document.getElementById('resultSection');
+    resultSection.style.display = 'none';
+    window.generatedPhotoData = null;
+    
+    logger.info('🔄 准备重新生成合影照片');
+}
+
 // 暴露新的全局函数
 window.playVideo = playVideo;
 window.closeVideoModal = closeVideoModal;
 window.showImageModal = showImageModal;
 window.closeImageModal = closeImageModal;
+window.openSelfieGenerator = openSelfieGenerator;
+window.closeSelfieGenerator = closeSelfieGenerator;
+window.changePhoto = changePhoto;
+window.generateAttractionPhoto = generateAttractionPhoto;
+window.downloadGeneratedPhoto = downloadGeneratedPhoto;
+window.regeneratePhoto = regeneratePhoto;

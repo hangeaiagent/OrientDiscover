@@ -1044,6 +1044,12 @@ async def generate_attraction_photo(
     user_photo: UploadFile = File(...),
     attraction_name: str = Form(...),
     location: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    opening_hours: Optional[str] = Form(None),
+    ticket_price: Optional[str] = Form(None),
+    latitude: Optional[str] = Form(None),
+    longitude: Optional[str] = Form(None),
     custom_prompt: Optional[str] = Form(None)
 ):
     """
@@ -1053,6 +1059,12 @@ async def generate_attraction_photo(
         user_photo: 用户上传的照片
         attraction_name: 景点名称
         location: 景点位置（可选）
+        category: 景点类别（可选）
+        description: 景点描述（可选）
+        opening_hours: 开放时间（可选）
+        ticket_price: 门票价格（可选）
+        latitude: 纬度（可选）
+        longitude: 经度（可选）
         custom_prompt: 自定义提示词（可选）
         
     Returns:
@@ -1065,11 +1077,21 @@ async def generate_attraction_photo(
         if not user_photo.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="请上传有效的图片文件")
         
+        # 转换坐标参数
+        lat_float = float(latitude) if latitude else None
+        lng_float = float(longitude) if longitude else None
+        
         # 调用Gemini服务生成合影
         success, message, result = await gemini_service.generate_attraction_photo(
             user_photo=user_photo,
             attraction_name=attraction_name,
             location=location,
+            category=category,
+            description=description,
+            opening_hours=opening_hours,
+            ticket_price=ticket_price,
+            latitude=lat_float,
+            longitude=lng_float,
             custom_prompt=custom_prompt
         )
         
