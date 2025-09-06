@@ -9,110 +9,141 @@
     "edit": "Editar",
     "delete": "Eliminar",
     "search": "Buscar",
-    "back": "Atrás",
+    "back": "Volver",
     "next": "Siguiente",
     "previous": "Anterior",
     "submit": "Enviar",
     "close": "Cerrar"
   },
   "header": {
-    "brand": "Orient Director",
-    "tagline": "Exploración de Viajes con IA",
-    "login": "Iniciar Sesión",
+    "brand": "Fiesta de Exploración de Direcciones",
+    "tagline": "Exploración Turística Inteligente con IA",
+    "login": "Iniciar sesión",
     "register": "Registrarse",
     "profile": "Perfil",
-    "logout": "Cerrar Sesión",
+    "logout": "Cerrar sesión",
     "language": "Idioma"
   },
   "homepage": {
-    "title": "Orient Director",
-    "subtitle": "Exploración de Viajes con IA, Descubre la Belleza del Mundo",
-    "description": "Usa tecnología de IA para explorar atracciones alrededor del mundo y experimenta la planificación de viajes inmersiva",
-    "getStarted": "Comenzar a Explorar",
+    "title": "Fiesta de Exploración de Direcciones",
+    "subtitle": "Exploración turística con IA inteligente, descubre la belleza del mundo",
+    "description": "Explora atracciones alrededor del mundo con tecnología IA y experimenta una planificación turística inmersiva.",
+    "getStarted": "Comienza a explorar",
     "features": {
-      "title": "Características",
+      "title": "Características destacadas",
       "aiExploration": {
         "title": "Exploración Inteligente con IA",
-        "description": "Recomendaciones inteligentes de atracciones y planificación de rutas basadas en IA"
+        "description": "Recomendación inteligente de atracciones y planificación de rutas basada en IA"
       },
       "streetView": {
-        "title": "Experiencia de Vista de Calle",
-        "description": "Vista previa de calle 360 grados para una experiencia inmersiva del destino"
+        "title": "Experiencia de Street View",
+        "description": "Vista de 360 grados, sumérgete en el destino con una experiencia inmersiva."
       },
       "photoGeneration": {
-        "title": "Generación de Fotos con IA",
-        "description": "Genera fotos personalizadas con atracciones famosas"
+        "title": "Generación de fotos con IA",
+        "description": "Generar fotos personalizadas con atracciones famosas"
       },
       "multiLanguage": {
-        "title": "Soporte Multiidioma",
-        "description": "Soporte para 16 idiomas, experiencia amigable para usuarios en todo el mundo"
+        "title": "Soporte multilingüe",
+        "description": "Compatible con 16 idiomas, experiencia amigable para usuarios globales"
+      }
+    },
+    "howItWorks": {
+      "title": "Cómo usar",
+      "step1": {
+        "title": "Seleccionar destino",
+        "description": "Seleccione la ciudad o atracción que desea explorar"
+      },
+      "step2": {
+        "title": "Recomendación inteligente de IA",
+        "description": "IA le recomienda atracciones populares cercanas"
+      },
+      "step3": {
+        "title": "Experiencia inmersiva",
+        "description": "Ver Street View, crear fotos grupales y experimentar el destino en profundidad."
       }
     }
   },
   "auth": {
-    "loginTitle": "Iniciar Sesión",
-    "registerTitle": "Crear Cuenta",
-    "noAccount": "¿No tienes una cuenta?",
+    "loginTitle": "Iniciar sesión",
+    "registerTitle": "Crear cuenta",
+    "noAccount": "¿Aún no tienes una cuenta?",
     "hasAccount": "¿Ya tienes una cuenta?",
-    "registerNow": "Regístrate Ahora",
-    "loginNow": "Inicia Sesión Ahora",
-    "emailPlaceholder": "Dirección de Correo",
+    "registerNow": "Regístrate ahora",
+    "loginNow": "Iniciar sesión ahora",
+    "emailPlaceholder": "Dirección de correo electrónico",
     "passwordPlaceholder": "Contraseña",
-    "confirmPasswordPlaceholder": "Confirmar Contraseña",
-    "usernamePlaceholder": "Nombre de Usuario",
-    "login": "Iniciar Sesión",
+    "confirmPasswordPlaceholder": "Confirmar contraseña",
+    "usernamePlaceholder": "Nombre de usuario",
+    "login": "Iniciar sesión",
     "register": "Registrarse",
-    "welcomeBack": "Bienvenido de Vuelta",
-    "joinUs": "Únete a Nosotros",
-    "forgotPassword": "¿Olvidaste tu Contraseña?",
-    "backToHome": "Volver al Inicio",
+    "welcomeBack": "Bienvenido de nuevo",
+    "joinUs": "Únete a nosotros",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "backToHome": "Volver al inicio",
     "loginSuccess": "¡Inicio de sesión exitoso!",
     "registerSuccess": "¡Registro exitoso!",
-    "registerDescription": "Por favor completa tu información para crear una cuenta"
+    "registerDescription": "Por favor, complete su información para crear una cuenta",
+    "validation": {
+      "emailRequired": "Por favor, ingrese la dirección de correo electrónico",
+      "emailInvalid": "Por favor, ingrese una dirección de correo electrónico válida",
+      "passwordRequired": "Por favor, ingrese la contraseña",
+      "passwordConfirmRequired": "Confirmar contraseña",
+      "passwordTooShort": "La contraseña debe tener al menos 6 caracteres.",
+      "usernameRequired": "Por favor, ingrese su nombre de usuario",
+      "usernameMinLength": "El nombre de usuario debe tener al menos 3 caracteres."
+    },
+    "errors": {
+      "loginFailed": "Error de inicio de sesión, por favor inténtalo de nuevo",
+      "invalidCredentials": "Correo electrónico o contraseña incorrectos, por favor verifique e intente nuevamente.",
+      "registerFailed": "Registro fallido",
+      "passwordMismatch": "Las contraseñas ingresadas no coinciden.",
+      "emailAlreadyRegistered": "Este correo ya está registrado, por favor inicia sesión directamente."
+    }
   },
   "exploration": {
-    "title": "Explorar Atracciones",
-    "currentLocation": "Ubicación Actual",
-    "nearbyAttractions": "Atracciones Cercanas",
+    "title": "Explorar atracciones",
+    "currentLocation": "Ubicación actual",
+    "nearbyAttractions": "Atracciones cercanas",
     "distance": "Distancia",
-    "exploreHere": "Explorar Aquí",
-    "generatePhoto": "Generar Foto",
-    "viewStreetView": "Ver Vista de Calle",
-    "doroPhoto": "Foto Doro",
-    "noAttractionsFound": "No se encontró información de ubicación relevante",
+    "exploreHere": "Deambular hasta aquí",
+    "generatePhoto": "Generar foto grupal",
+    "viewStreetView": "Ver Street View",
+    "doroPhoto": "Doro Selfie",
+    "noAttractionsFound": "No se encontró información de ubicación relevante.",
     "searching": "Buscando...",
     "loading": "Cargando...",
     "noInfo": "Sin información",
-    "modernMode": "Modo Moderno",
+    "modernMode": "Modo moderno",
     "ancientMode": "Modo Antiguo",
     "futureMode": "Modo Futuro"
   },
   "languageSelector": {
-    "title": "Elegir Idioma y Región",
-    "currentLanguage": "Idioma Actual"
+    "title": "Seleccionar idioma y región",
+    "currentLanguage": "Idioma actual"
   },
   "profile": {
     "title": "Perfil",
-    "username": "Nombre de Usuario",
-    "email": "Correo Electrónico",
-    "joinDate": "Fecha de Registro",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "joinDate": "Fecha de incorporación",
     "preferences": "Preferencias",
-    "language": "Preferencia de Idioma",
+    "language": "Preferencia de idioma",
     "theme": "Tema",
-    "notifications": "Configuración de Notificaciones",
-    "save": "Guardar Configuración"
+    "notifications": "Configuración de notificaciones",
+    "save": "Guardar configuración"
   },
   "settings": {
     "title": "Configuración",
-    "general": "Configuración General",
-    "language": "Configuración de Idioma",
-    "theme": "Configuración de Tema",
-    "notifications": "Configuración de Notificaciones",
-    "privacy": "Configuración de Privacidad",
-    "account": "Configuración de Cuenta",
+    "general": "Configuración general",
+    "language": "Configuración de idioma",
+    "theme": "Configuración de temas",
+    "notifications": "Configuración de notificaciones",
+    "privacy": "Configuración de privacidad",
+    "account": "Configuración de cuenta",
     "about": "Acerca de",
     "version": "Versión",
-    "feedback": "Comentarios",
+    "feedback": "Feedback",
     "help": "Ayuda",
     "support": "Soporte"
   },
@@ -138,29 +169,29 @@
     "serverError": "Error del servidor",
     "notFound": "No encontrado",
     "unauthorized": "No autorizado",
-    "forbidden": "Prohibido",
-    "validationError": "Error de validación",
+    "forbidden": "Acceso prohibido",
+    "validationError": "Error de verificación",
     "unknownError": "Error desconocido"
   },
   "placeholders": {
     "searchCity": "Buscar ciudad...",
-    "searchAttraction": "Buscar atracción...",
-    "enterEmail": "Ingrese dirección de correo",
-    "enterPassword": "Ingrese contraseña",
-    "enterUsername": "Ingrese nombre de usuario",
+    "searchAttraction": "Buscar atracciones...",
+    "enterEmail": "Por favor, ingrese la dirección de correo electrónico",
+    "enterPassword": "Por favor, ingrese la contraseña",
+    "enterUsername": "Por favor, ingrese su nombre de usuario",
     "selectLanguage": "Seleccionar idioma",
     "selectTheme": "Seleccionar tema"
   },
   "status": {
     "online": "En línea",
-    "offline": "Desconectado",
+    "offline": "Sin conexión",
     "connecting": "Conectando...",
     "connected": "Conectado",
     "disconnected": "Desconectado",
     "loading": "Cargando...",
     "processing": "Procesando...",
     "completed": "Completado",
-    "failed": "Falló"
+    "failed": "Error"
   },
   "time": {
     "now": "Ahora",
@@ -170,19 +201,100 @@
     "thisWeek": "Esta semana",
     "thisMonth": "Este mes",
     "thisYear": "Este año",
-    "ago": "hace",
-    "in": "en"
+    "ago": "Anterior",
+    "in": "Atrás"
   },
   "units": {
-    "kilometer": "kilómetro",
-    "meter": "metro",
-    "mile": "milla",
-    "hour": "hora",
-    "minute": "minuto",
-    "second": "segundo",
-    "day": "día",
-    "week": "semana",
-    "month": "mes",
-    "year": "año"
+    "kilometer": "Kilómetro",
+    "meter": "m",
+    "mile": "Milla",
+    "hour": "Hora",
+    "minute": "Minutos",
+    "second": "seg",
+    "day": "Día",
+    "week": "Semana",
+    "month": "Mes",
+    "year": "Año"
+  },
+  "system": {
+    "appStart": "Dirección de la aplicación de inicio de la fiesta de exploración",
+    "initializing": "Inicializando componentes de la aplicación...",
+    "browserNotSupported": "Su navegador no es compatible con la función requerida, utilice un navegador moderno para acceder.",
+    "browserCheckPassed": "Comprobación de compatibilidad del navegador aprobada",
+    "initializationComplete": "Aplicación inicializada correctamente",
+    "getting": "Obteniendo...",
+    "failed": "Error al obtener",
+    "unavailable": "No se puede obtener",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito"
+  },
+  "compass": {
+    "directions": {
+      "north": "Norte",
+      "northeast": "Noreste",
+      "east": "Este",
+      "southeast": "Sudeste",
+      "south": "Sur",
+      "southwest": "Suroeste",
+      "west": "Oeste",
+      "northwest": "Noroeste"
+    },
+    "manualInput": {
+      "title": "No se puede obtener la dirección automáticamente",
+      "instruction": "Haga clic en la brújula para establecer la dirección o ingrese manualmente:",
+      "placeholder": "Ángulo de dirección",
+      "button": "Configuración",
+      "hint": "Nota: 0°=Norte, 90°=Este, 180°=Sur, 270°=Oeste",
+      "clickToSet": "Haga clic para establecer la dirección"
+    },
+    "permissionRequired": "Se necesita permiso de orientación del dispositivo para usar la función de brújula.",
+    "deviceSupported": "El dispositivo admite detección de orientación, sin necesidad de permisos adicionales.",
+    "initializing": "Inicializando brújula...",
+    "deviceOrientationSupported": "El dispositivo admite detección de orientación, agregando detector de eventos...",
+    "orientationEventTriggered": "Evento de dirección activado con éxito",
+    "orientationEventNoData": "Evento de dirección activado pero sin datos",
+    "absoluteOrientationEvent": "Evento de orientación absoluta activado",
+    "noOrientationData": "No se detectaron datos de dirección, puede ser necesario mover el dispositivo o verificar los permisos.",
+    "northDetected": "Se ha detectado el norte verdadero (0°), puede comenzar la búsqueda directamente.",
+    "deviceNotSupported": "El dispositivo no admite la detección de orientación.",
+    "directionUpdated": "Actualización de dirección: {{heading}}° ({{direction}})",
+    "manualSetSuccess": "Configuración manual de dirección: {{heading}}°",
+    "clickSetSuccess": "Al hacer clic para establecer la dirección: {{heading}}°",
+    "invalidAngle": "Ingrese un ángulo de dirección válido (0-359)"
+  },
+  "location": {
+    "gettingLocation": "Comenzando a obtener la información de ubicación...",
+    "gettingAddress": "Obteniendo información de dirección...",
+    "addressSuccess": "Dirección obtenida con éxito: {{location}}",
+    "addressFailed": "Error al obtener la dirección: {{error}}",
+    "permissionStatus": "Estado del permiso de ubicación: {{status}}",
+    "iosPermissionRequired": "Se detectó un dispositivo iOS, se requiere permiso de orientación.",
+    "deviceOrientationPermission": "Permiso de orientación del dispositivo: {{permission}}",
+    "permissionRequestFailed": "Solicitud de permiso de orientación del dispositivo fallida: {{error}}",
+    "permissionRequestFailedGeneric": "Solicitud de permisos fallida: {{error}}",
+    "locationUpdated": "Ubicación actualizada a: {{location}}",
+    "locationUpdatedCoords": "Ubicación actualizada a: {{name}} ({{lat}}, {{lng}})",
+    "manualLocationSet": "Configuración manual de ubicación: {{lat}}, {{lng}}",
+    "newLocation": "Nueva ubicación {{lat}}, {{lng}}",
+    "manualLocation": "Ubicación manual {{lat}}, {{lng}}",
+    "accuracy": "Precisión de ubicación: {{accuracy}} metros",
+    "continueExploration": "Explorar más"
+  },
+  "places": {
+    "noResults": "No se encontró información de ubicación relevante.",
+    "arrived": "Llegado: {{name}}",
+    "continueQuestion": "Estás aquí ahora, ¿quieres seguir explorando?",
+    "selectScene": "Seleccionar escenario",
+    "category": "Categoría",
+    "distance": "Distancia",
+    "streetViewTitle": "{{name}} - Vista de la calle",
+    "unknownLocation": "Ubicación desconocida"
+  },
+  "journey": {
+    "summaryGenerated": "Resumen del viaje generado: {{scenes}} escenas, {{distance}}km, {{time}} minutos",
+    "historyCleared": "Historial borrado.",
+    "journeyStarted": "El viaje ha comenzado",
+    "journeyEnded": "El viaje ha terminado"
   }
 }

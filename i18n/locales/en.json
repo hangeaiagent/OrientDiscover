@@ -16,89 +16,89 @@
     "close": "Close"
   },
   "header": {
-    "brand": "Orient Director",
-    "tagline": "AI-Powered Travel Exploration",
+    "brand": "Direction Exploration Party",
+    "tagline": "AI Smart Travel Exploration",
     "login": "Login",
     "register": "Register",
     "profile": "Profile",
-    "logout": "Logout",
+    "logout": "Log Out",
     "language": "Language"
   },
   "homepage": {
-    "title": "Orient Director",
+    "title": "Direction Exploration Party",
     "subtitle": "AI-Powered Travel Exploration, Discover the Beauty of the World",
-    "description": "Use AI technology to explore attractions around the world and experience immersive travel planning",
+    "description": "Explore attractions around the world with AI technology and experience immersive travel planning.",
     "getStarted": "Start Exploring",
     "features": {
-      "title": "Features",
+      "title": "Feature Highlights",
       "aiExploration": {
-        "title": "AI Smart Exploration",
-        "description": "AI-powered smart attraction recommendations and route planning"
+        "title": "AI Intelligent Exploration",
+        "description": "AI-based intelligent attraction recommendations and route planning"
       },
       "streetView": {
         "title": "Street View Experience",
-        "description": "360-degree street view preview for immersive destination experience"
+        "description": "360° Street View Preview, Immerse Yourself in the Destination"
       },
       "photoGeneration": {
         "title": "AI Photo Generation",
-        "description": "Generate personalized photos with famous attractions"
+        "description": "Generate personalized photos with famous landmarks"
       },
       "multiLanguage": {
-        "title": "Multi-language Support",
-        "description": "Support for 16 languages, user-friendly experience worldwide"
+        "title": "Multilingual Support",
+        "description": "Supports 16 languages, providing a user-friendly experience for global users."
       }
     },
     "howItWorks": {
-      "title": "How It Works",
+      "title": "How to Use",
       "step1": {
-        "title": "Choose Destination",
-        "description": "Select the city or attraction you want to explore"
+        "title": "Select Destination",
+        "description": "Select the city or attraction you wish to explore"
       },
       "step2": {
         "title": "AI Smart Recommendations",
-        "description": "AI recommends nearby popular attractions for you"
+        "description": "AI recommends popular attractions near you."
       },
       "step3": {
         "title": "Immersive Experience",
-        "description": "View street scenes, generate photos, deeply experience destinations"
+        "description": "View street view, generate group photos, and deeply experience the destination."
       }
     }
   },
   "auth": {
-    "loginTitle": "Sign In",
+    "loginTitle": "Login Account",
     "registerTitle": "Create Account",
-    "noAccount": "Don't have an account?",
+    "noAccount": "Don't have an account yet?",
     "hasAccount": "Already have an account?",
-    "registerNow": "Sign Up Now",
-    "loginNow": "Sign In Now",
-    "emailPlaceholder": "Email Address",
+    "registerNow": "Register Now",
+    "loginNow": "Log In Now",
+    "emailPlaceholder": "Email address",
     "passwordPlaceholder": "Password",
     "confirmPasswordPlaceholder": "Confirm Password",
     "usernamePlaceholder": "Username",
-    "login": "Sign In",
-    "register": "Sign Up",
-    "welcomeBack": "Welcome Back",
+    "login": "Login",
+    "register": "Register",
+    "welcomeBack": "Welcome back",
     "joinUs": "Join Us",
-    "forgotPassword": "Forgot Password?",
+    "forgotPassword": "Forgot password?",
     "backToHome": "Back to Home",
     "loginSuccess": "Login successful!",
     "registerSuccess": "Registration successful!",
     "registerDescription": "Please fill in your information to create an account",
     "validation": {
-      "emailRequired": "Please enter email address",
+      "emailRequired": "Please enter your email address",
       "emailInvalid": "Please enter a valid email address",
-      "passwordRequired": "Please enter password",
+      "passwordRequired": "Please enter your password",
       "passwordConfirmRequired": "Please confirm password",
-      "passwordTooShort": "Password must be at least 6 characters",
-      "usernameRequired": "Please enter username",
+      "passwordTooShort": "Password must be at least 6 characters long",
+      "usernameRequired": "Please enter your username",
       "usernameMinLength": "Username must be at least 3 characters"
     },
     "errors": {
-      "loginFailed": "Login failed, please try again",
-      "invalidCredentials": "Invalid email or password, please check and try again",
+      "loginFailed": "Login failed, please try again.",
+      "invalidCredentials": "Email or password is incorrect. Please check and try again.",
       "registerFailed": "Registration failed",
-      "passwordMismatch": "Passwords do not match",
-      "emailAlreadyRegistered": "Email already registered, please sign in directly"
+      "passwordMismatch": "The passwords entered twice do not match.",
+      "emailAlreadyRegistered": "This email is already registered. Please log in directly."
     }
   },
   "exploration": {
@@ -106,21 +106,21 @@
     "currentLocation": "Current Location",
     "nearbyAttractions": "Nearby Attractions",
     "distance": "Distance",
-    "exploreHere": "Roam to Here",
-    "generatePhoto": "Generate Photo",
+    "exploreHere": "Roaming here",
+    "generatePhoto": "Generate Group Photo",
     "viewStreetView": "View Street View",
     "doroPhoto": "Doro Photo",
     "noAttractionsFound": "No relevant location information found",
     "searching": "Searching...",
     "loading": "Loading...",
-    "noInfo": "No Info",
+    "noInfo": "No information available",
     "modernMode": "Modern Mode",
     "ancientMode": "Ancient Mode",
     "futureMode": "Future Mode"
   },
   "languageSelector": {
-    "title": "Choose Language and Region",
-    "currentLanguage": "Current Language"
+    "title": "Select Language and Region",
+    "currentLanguage": "Current language"
   },
   "profile": {
     "title": "Profile",
@@ -166,21 +166,21 @@
   },
   "errors": {
     "networkError": "Network connection error",
-    "serverError": "Server error",
+    "serverError": "Server Error",
     "notFound": "Not found",
     "unauthorized": "Unauthorized",
-    "forbidden": "Forbidden",
-    "validationError": "Validation error",
+    "forbidden": "Access Denied",
+    "validationError": "Validation Error",
     "unknownError": "Unknown error"
   },
   "placeholders": {
     "searchCity": "Search city...",
-    "searchAttraction": "Search attraction...",
-    "enterEmail": "Enter email address",
-    "enterPassword": "Enter password",
-    "enterUsername": "Enter username",
-    "selectLanguage": "Select language",
-    "selectTheme": "Select theme"
+    "searchAttraction": "Search attractions...",
+    "enterEmail": "Please enter your email address",
+    "enterPassword": "Please enter your password",
+    "enterUsername": "Please enter your username",
+    "selectLanguage": "Select Language",
+    "selectTheme": "Select Theme"
   },
   "status": {
     "online": "Online",
@@ -191,7 +191,7 @@
     "loading": "Loading...",
     "processing": "Processing...",
     "completed": "Completed",
-    "failed": "Failed"
+    "failed": "Failure"
   },
   "time": {
     "now": "Now",
@@ -201,30 +201,30 @@
     "thisWeek": "This week",
     "thisMonth": "This month",
     "thisYear": "This year",
-    "ago": "ago",
-    "in": "in"
+    "ago": "Previous",
+    "in": "Back"
   },
   "units": {
-    "kilometer": "kilometer",
-    "meter": "meter",
-    "mile": "mile",
-    "hour": "hour",
+    "kilometer": "Kilometer",
+    "meter": "Meter",
+    "mile": "Mile",
+    "hour": "Hour",
     "minute": "minute",
-    "second": "second",
-    "day": "day",
-    "week": "week",
-    "month": "month",
-    "year": "year"
+    "second": "Seconds",
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "year": "Year"
   },
   "system": {
-    "appStart": "Orient Director App Starting",
+    "appStart": "Direction Exploration Party App Launched",
     "initializing": "Initializing application components...",
-    "browserNotSupported": "Your browser does not support the required features. Please use a modern browser.",
+    "browserNotSupported": "Your browser does not support the required functionality. Please use a modern browser to access.",
     "browserCheckPassed": "Browser compatibility check passed",
     "initializationComplete": "Application initialization complete",
     "getting": "Getting...",
-    "failed": "Failed",
-    "unavailable": "Unavailable",
+    "failed": "Failed to fetch",
+    "unavailable": "Unable to retrieve",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success"
@@ -241,51 +241,51 @@
       "northwest": "Northwest"
     },
     "manualInput": {
-      "title": "Unable to get direction automatically",
-      "instruction": "Please click the compass to set direction, or enter manually:",
-      "placeholder": "Direction angle",
-      "button": "Set",
-      "hint": "Tip: 0°=North, 90°=East, 180°=South, 270°=West",
+      "title": "Unable to automatically obtain direction",
+      "instruction": "Please click the compass to set the direction, or enter manually:",
+      "placeholder": "Direction Angle",
+      "button": "Settings",
+      "hint": "Note: 0°=North, 90°=East, 180°=South, 270°=West",
       "clickToSet": "Click to set direction"
     },
-    "permissionRequired": "Device orientation permission required to use compass feature",
-    "deviceSupported": "Device supports orientation detection, no additional permission needed",
+    "permissionRequired": "Device orientation permission is required to use the compass feature.",
+    "deviceSupported": "Device supports orientation detection, no additional permissions required.",
     "initializing": "Initializing compass...",
-    "deviceOrientationSupported": "Device supports orientation detection, adding event listeners...",
-    "orientationEventTriggered": "Orientation event triggered successfully",
-    "orientationEventNoData": "Orientation event triggered but no data",
+    "deviceOrientationSupported": "Device supports orientation detection, adding event listener...",
+    "orientationEventTriggered": "Direction event triggered successfully.",
+    "orientationEventNoData": "Direction event triggered but no data",
     "absoluteOrientationEvent": "Absolute orientation event triggered",
-    "noOrientationData": "No orientation data detected, may need to move device or check permissions",
-    "northDetected": "North direction detected (0°), ready to start searching",
-    "deviceNotSupported": "Device does not support orientation detection",
-    "directionUpdated": "Direction updated: {{heading}}° ({{direction}})",
-    "manualSetSuccess": "Manual direction set: {{heading}}°",
-    "clickSetSuccess": "Direction set by clicking: {{heading}}°",
+    "noOrientationData": "No direction data detected. Device movement or permission check may be required.",
+    "northDetected": "True North (0°) detected. You can start searching directly.",
+    "deviceNotSupported": "Device does not support orientation detection.",
+    "directionUpdated": "Heading Update: {{heading}}° ({{direction}})",
+    "manualSetSuccess": "Manual Direction Setting: {{heading}}°",
+    "clickSetSuccess": "Set direction by clicking: {{heading}}°",
     "invalidAngle": "Please enter a valid direction angle (0-359)"
   },
   "location": {
-    "gettingLocation": "Getting location information...",
+    "gettingLocation": "Start getting location information...",
     "gettingAddress": "Getting address information...",
-    "addressSuccess": "Address retrieved successfully: {{location}}",
-    "addressFailed": "Address retrieval failed: {{error}}",
-    "permissionStatus": "Geolocation permission status: {{status}}",
-    "iosPermissionRequired": "iOS device detected, orientation permission required",
-    "deviceOrientationPermission": "Device orientation permission: {{permission}}",
+    "addressSuccess": "Address successfully obtained: {{location}}",
+    "addressFailed": "Failed to get address: {{error}}",
+    "permissionStatus": "Geolocation Permission Status: {{status}}",
+    "iosPermissionRequired": "iOS device detected, orientation permission required.",
+    "deviceOrientationPermission": "Device Orientation Permission: {{permission}}",
     "permissionRequestFailed": "Device orientation permission request failed: {{error}}",
     "permissionRequestFailedGeneric": "Permission request failed: {{error}}",
-    "locationUpdated": "Location updated to: {{location}}",
+    "locationUpdated": "Location has been updated to: {{location}}",
     "locationUpdatedCoords": "Location updated to: {{name}} ({{lat}}, {{lng}})",
-    "manualLocationSet": "Manual location set: {{lat}}, {{lng}}",
+    "manualLocationSet": "Manual location setting: {{lat}}, {{lng}}",
     "newLocation": "New location {{lat}}, {{lng}}",
-    "manualLocation": "Manual location {{lat}}, {{lng}}",
-    "accuracy": "Location accuracy: {{accuracy}}m",
-    "continueExploration": "Continue exploration"
+    "manualLocation": "Manual Location {{lat}}, {{lng}}",
+    "accuracy": "Location Accuracy: {{accuracy}} meters",
+    "continueExploration": "Continue Exploring"
   },
   "places": {
-    "noResults": "No related places found",
-    "arrived": "Arrived at: {{name}}",
+    "noResults": "No relevant location information found",
+    "arrived": "Arrived: {{name}}",
     "continueQuestion": "You are here now, would you like to continue exploring?",
-    "selectScene": "Select scene",
+    "selectScene": "Select Scene",
     "category": "Category",
     "distance": "Distance",
     "streetViewTitle": "{{name}} - Street View",
@@ -293,8 +293,8 @@
   },
   "journey": {
     "summaryGenerated": "Journey summary generated: {{scenes}} scenes, {{distance}}km, {{time}} minutes",
-    "historyCleared": "History cleared",
-    "journeyStarted": "Journey started",
-    "journeyEnded": "Journey ended"
+    "historyCleared": "History has been cleared",
+    "journeyStarted": "Journey has started",
+    "journeyEnded": "Journey has ended"
   }
 }

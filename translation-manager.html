@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多语言翻译管理器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-card.complete {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .status-card.incomplete {
+            border-left-color: #ffc107;
+            background: #fffdf7;
+        }
+
+        .status-card.error {
+            border-left-color: #dc3545;
+            background: #fff8f8;
+        }
+
+        .language-info {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .language-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .language-code {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            margin-left: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .log-area {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .translation-form {
+            display: grid;
+            grid-template-columns: 1fr 200px 120px;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .translation-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 多语言翻译管理器</h1>
+            <p>基于DeepSeek大模型的智能翻译系统</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 统计摘要 -->
+            <div class="stats-summary">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalLanguages">-</div>
+                    <div class="stat-label">支持语言</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completeLanguages">-</div>
+                    <div class="stat-label">完整语言</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="incompleteLanguages">-</div>
+                    <div class="stat-label">待翻译</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalKeys">-</div>
+                    <div class="stat-label">翻译键数</div>
+                </div>
+            </div>
+
+            <!-- 操作区域 -->
+            <div class="section">
+                <h2>🔧 翻译操作</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-success" onclick="checkCompleteness()">
+                        <span id="checkLoading" class="loading" style="display: none;"></span>
+                        检查完整性
+                    </button>
+                    <button class="btn btn-warning" onclick="updateAllTranslations()">
+                        <span id="updateLoading" class="loading" style="display: none;"></span>
+                        更新所有翻译
+                    </button>
+                    <button class="btn" onclick="clearCache()">
+                        清空缓存
+                    </button>
+                    <button class="btn" onclick="testTranslationService()">
+                        测试服务
+                    </button>
+                </div>
+
+                <!-- 单个翻译 -->
+                <div class="translation-form">
+                    <div class="form-group">
+                        <label for="singleText">翻译文本</label>
+                        <textarea id="singleText" placeholder="输入要翻译的文本..." rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="targetLang">目标语言</label>
+                        <select id="targetLang">
+                            <option value="">选择语言...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn" onclick="translateSingle()">
+                            <span id="singleLoading" class="loading" style="display: none;"></span>
+                            翻译
+                        </button>
+                    </div>
+                </div>
+
+                <div id="translationResult" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;"></div>
+            </div>
+
+            <!-- 语言状态 -->
+            <div class="section">
+                <h2>📊 语言完整性状态</h2>
+                <div id="languageStatus" class="status-grid">
+                    <div class="status-card">
+                        <div class="language-info">
+                            <span class="language-name">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作日志 -->
+            <div class="section">
+                <h2>📝 操作日志</h2>
+                <div id="logArea" class="log-area">欢迎使用多语言翻译管理器！\n点击"检查完整性"开始...\n</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API基础URL
+        const API_BASE = window.location.origin.includes('localhost') ? 
+            'http://localhost:8001' : 
+            'https://spot.gitagent.io';
+
+        // 日志函数
+        function log(message) {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            logArea.textContent += `[${timestamp}] ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(elementId, show) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.display = show ? 'inline-block' : 'none';
+            }
+        }
+
+        // 初始化页面
+        async function init() {
+            log('初始化翻译管理器...');
+            await loadSupportedLanguages();
+            await checkCompleteness();
+        }
+
+        // 加载支持的语言
+        async function loadSupportedLanguages() {
+            try {
+                const response = await fetch(`${API_BASE}/api/translation/languages`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const select = document.getElementById('targetLang');
+                    select.innerHTML = '<option value="">选择语言...</option>';
+                    
+                    Object.entries(result.data).forEach(([code, info]) => {
+                        if (code !== 'zh') { // 排除源语言
+                            const option = document.createElement('option');
+                            option.value = code;
+                            option.textContent = `${info.native} (${code})`;
+                            select.appendChild(option);
+                        }
+                    });
+                    
+                    log(`加载了 ${Object.keys(result.data).length} 种支持的语言`);
+                } else {
+                    log(`加载语言失败: ${result.message}`);
+                }
+            } catch (error) {
+                log(`加载语言异常: ${error.message}`);
+            }
+        }
+
+        // 检查完整性
+        async function checkCompleteness() {
+            showLoading('checkLoading', true);
+            log('开始检查翻译完整性...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/translation/check-completeness`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateStats(result.data);
+                    updateLanguageStatus(result.data.languages);
+                    log(`完整性检查完成: ${result.data.complete_languages}/${result.data.total_languages} 完整`);
+                } else {
+                    log(`完整性检查失败: ${result.message}`);
+                }
+            } catch (error) {
+                log(`完整性检查异常: ${error.message}`);
+            } finally {
+                showLoading('checkLoading', false);
+            }
+        }
+
+        // 更新统计信息
+        function updateStats(data) {
+            document.getElementById('totalLanguages').textContent = data.total_languages;
+            document.getElementById('completeLanguages').textContent = data.complete_languages;
+            document.getElementById('incompleteLanguages').textContent = data.incomplete_languages;
+            document.getElementById('totalKeys').textContent = data.source_keys;
+        }
+
+        // 更新语言状态
+        function updateLanguageStatus(languages) {
+            const container = document.getElementById('languageStatus');
+            container.innerHTML = '';
+            
+            Object.entries(languages).forEach(([code, info]) => {
+                const card = document.createElement('div');
+                card.className = `status-card ${info.complete ? 'complete' : (info.error ? 'error' : 'incomplete')}`;
+                
+                card.innerHTML = `
+                    <div class="language-info">
+                        <span class="language-name">${info.name}</span>
+                        <span class="language-code">${code}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${info.completeness}%"></div>
+                    </div>
+                    <div class="progress-text">
+                        ${info.keys}/${languages.zh ? languages.zh.keys : 0} 键 (${info.completeness}%)
+                        ${info.missing > 0 ? `- 缺失 ${info.missing} 个` : ''}
+                        ${info.error ? `- 错误: ${info.error}` : ''}
+                    </div>
+                    ${!info.complete && !info.error ? `
+                        <button class="btn btn-sm" onclick="translateLanguage('${code}')" style="margin-top: 10px;">
+                            <span id="lang_${code}_loading" class="loading" style="display: none;"></span>
+                            更新翻译
+                        </button>
+                    ` : ''}
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // 翻译单个语言
+        async function translateLanguage(langCode) {
+            showLoading(`lang_${langCode}_loading`, true);
+            log(`开始翻译 ${langCode}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/translation/update-i18n`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        source_lang: 'zh',
+                        target_languages: [langCode]
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log(`${langCode} 翻译完成: ${result.data.successful}/${result.data.total} 成功`);
+                    await checkCompleteness(); // 刷新状态
+                } else {
+                    log(`${langCode} 翻译失败: ${result.message}`);
+                }
+            } catch (error) {
+                log(`${langCode} 翻译异常: ${error.message}`);
+            } finally {
+                showLoading(`lang_${langCode}_loading`, false);
+            }
+        }
+
+        // 更新所有翻译
+        async function updateAllTranslations() {
+            showLoading('updateLoading', true);
+            log('开始更新所有语言翻译...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/translation/update-i18n`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        source_lang: 'zh'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log(`批量翻译完成: ${result.data.successful}/${result.data.total} 成功`);
+                    
+                    // 显示详细结果
+                    Object.entries(result.data.results).forEach(([lang, [success, error]]) => {
+                        if (success) {
+                            log(`  ✅ ${lang}: 翻译完成`);
+                        } else {
+                            log(`  ❌ ${lang}: ${error}`);
+                        }
+                    });
+                    
+                    await checkCompleteness(); // 刷新状态
+                } else {
+                    log(`批量翻译失败: ${result.message}`);
+                }
+            } catch (error) {
+                log(`批量翻译异常: ${error.message}`);
+            } finally {
+                showLoading('updateLoading', false);
+            }
+        }
+
+        // 单个文本翻译
+        async function translateSingle() {
+            const text = document.getElementById('singleText').value.trim();
+            const targetLang = document.getElementById('targetLang').value;
+            
+            if (!text) {
+                alert('请输入要翻译的文本');
+                return;
+            }
+            
+            if (!targetLang) {
+                alert('请选择目标语言');
+                return;
+            }
+            
+            showLoading('singleLoading', true);
+            log(`翻译文本到 ${targetLang}...`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/translation/translate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        target_lang: targetLang,
+                        source_lang: 'zh'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const resultDiv = document.getElementById('translationResult');
+                    resultDiv.innerHTML = `
+                        <strong>翻译结果:</strong><br>
+                        <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 4px;">
+                            ${result.translated_text}
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                    log(`翻译成功: ${text.substring(0, 20)}... -> ${result.translated_text.substring(0, 20)}...`);
+                } else {
+                    log(`翻译失败: ${result.message}`);
+                    document.getElementById('translationResult').style.display = 'none';
+                }
+            } catch (error) {
+                log(`翻译异常: ${error.message}`);
+                document.getElementById('translationResult').style.display = 'none';
+            } finally {
+                showLoading('singleLoading', false);
+            }
+        }
+
+        // 清空缓存
+        async function clearCache() {
+            log('清空翻译缓存...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/translation/clear-cache`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log('翻译缓存已清空');
+                } else {
+                    log(`清空缓存失败: ${result.message}`);
+                }
+            } catch (error) {
+                log(`清空缓存异常: ${error.message}`);
+            }
+        }
+
+        // 测试翻译服务
+        async function testTranslationService() {
+            log('测试翻译服务...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/translation/health`);
+                const result = await response.json();
+                
+                if (result.success && result.data.status === 'healthy') {
+                    log('✅ 翻译服务运行正常');
+                } else {
+                    log(`❌ 翻译服务异常: ${result.data.message || result.message}`);
+                }
+            } catch (error) {
+                log(`❌ 翻译服务测试失败: ${error.message}`);
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

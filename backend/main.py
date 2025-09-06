@@ -24,6 +24,7 @@ from fastapi.responses import FileResponse, Response
 import tempfile
 import shutil
 from auth import router as auth_router
+from deepseek_translation_service import deepseek_translation_service
 
 # 配置日志
 logging.basicConfig(
@@ -1810,6 +1811,334 @@ async def download_generated_image(filename: str):
     except Exception as e:
         logger.error(f"下载图片时出错: {e}")
         raise HTTPException(status_code=500, detail=f"下载图片失败: {str(e)}")
+
+# ================== 翻译服务相关端点 ==================
+
+class TranslationRequest(BaseModel):
+    text: str
+    target_lang: str
+    source_lang: str = "zh"
+    context: Optional[str] = None
+
+class TranslationResponse(BaseModel):
+    success: bool
+    message: str
+    translated_text: Optional[str] = None
+    source_text: Optional[str] = None
+    target_language: Optional[str] = None
+
+class BatchTranslationRequest(BaseModel):
+    texts: List[str]
+    target_lang: str
+    source_lang: str = "zh"
+    context: Optional[str] = None
+
+class I18nUpdateRequest(BaseModel):
+    source_lang: str = "zh"
+    target_languages: Optional[List[str]] = None
+
+@app.get("/api/translation/health")
+async def translation_health_check():
+    """翻译服务健康检查"""
+    try:
+        if not deepseek_translation_service:
+            return {
+                "success": False,
+                "message": "翻译服务未初始化",
+                "data": {"status": "error", "api_accessible": False}
+            }
+        
+        health_status = await deepseek_translation_service.health_check()
+        return {
+            "success": True,
+            "data": health_status
+        }
+    except Exception as e:
+        logger.error(f"翻译服务健康检查失败: {e}")
+        return {
+            "success": False,
+            "message": f"健康检查失败: {str(e)}",
+            "data": {"status": "error", "api_accessible": False}
+        }
+
+@app.get("/api/translation/languages")
+async def get_supported_languages():
+    """获取支持的语言列表"""
+    try:
+        if not deepseek_translation_service:
+            return {
+                "success": False,
+                "message": "翻译服务未初始化",
+                "data": {}
+            }
+        
+        languages = deepseek_translation_service.get_supported_languages()
+        return {
+            "success": True,
+            "data": languages
+        }
+    except Exception as e:
+        logger.error(f"获取支持语言失败: {e}")
+        return {
+            "success": False,
+            "message": f"获取语言列表失败: {str(e)}",
+            "data": {}
+        }
+
+@app.post("/api/translation/translate", response_model=TranslationResponse)
+async def translate_text_api(request: TranslationRequest):
+    """翻译单个文本"""
+    try:
+        if not deepseek_translation_service:
+            return TranslationResponse(
+                success=False,
+                message="翻译服务未初始化"
+            )
+        
+        success, error, translated_text = await deepseek_translation_service.translate_text(
+            request.text,
+            request.target_lang,
+            request.source_lang,
+            request.context
+        )
+        
+        if success:
+            return TranslationResponse(
+                success=True,
+                message="翻译成功",
+                translated_text=translated_text,
+                source_text=request.text,
+                target_language=request.target_lang
+            )
+        else:
+            return TranslationResponse(
+                success=False,
+                message=error,
+                source_text=request.text,
+                target_language=request.target_lang
+            )
+    
+    except Exception as e:
+        logger.error(f"翻译API错误: {e}")
+        return TranslationResponse(
+            success=False,
+            message=f"翻译失败: {str(e)}"
+        )
+
+@app.post("/api/translation/batch-translate")
+async def batch_translate_api(request: BatchTranslationRequest):
+    """批量翻译文本"""
+    try:
+        if not deepseek_translation_service:
+            return {
+                "success": False,
+                "message": "翻译服务未初始化",
+                "data": {}
+            }
+        
+        results = await deepseek_translation_service.batch_translate_texts(
+            request.texts,
+            request.target_lang,
+            request.source_lang,
+            request.context
+        )
+        
+        return {
+            "success": True,
+            "message": f"批量翻译完成，处理了 {len(results)} 个文本",
+            "data": results
+        }
+    
+    except Exception as e:
+        logger.error(f"批量翻译API错误: {e}")
+        return {
+            "success": False,
+            "message": f"批量翻译失败: {str(e)}",
+            "data": {}
+        }
+
+@app.post("/api/translation/update-i18n")
+async def update_i18n_files_api(request: I18nUpdateRequest):
+    """更新i18n文件"""
+    try:
+        if not deepseek_translation_service:
+            return {
+                "success": False,
+                "message": "翻译服务未初始化",
+                "data": {}
+            }
+        
+        i18n_directory = "/workspace/i18n/locales"
+        
+        logger.info(f"开始更新i18n文件: 源语言={request.source_lang}")
+        
+        results = await deepseek_translation_service.update_all_i18n_files(
+            i18n_directory, request.source_lang
+        )
+        
+        # 统计结果
+        successful = sum(1 for success, _ in results.values() if success)
+        total = len(results)
+        
+        return {
+            "success": True,
+            "message": f"i18n文件更新完成: {successful}/{total} 成功",
+            "data": {
+                "total": total,
+                "successful": successful,
+                "failed": total - successful,
+                "results": results
+            }
+        }
+    
+    except Exception as e:
+        logger.error(f"更新i18n文件API错误: {e}")
+        return {
+            "success": False,
+            "message": f"更新i18n文件失败: {str(e)}",
+            "data": {}
+        }
+
+@app.get("/api/translation/check-completeness")
+async def check_i18n_completeness():
+    """检查i18n文件完整性"""
+    try:
+        import json
+        
+        i18n_directory = "/workspace/i18n/locales"
+        source_lang = "zh"
+        source_file = os.path.join(i18n_directory, f"{source_lang}.json")
+        
+        if not os.path.exists(source_file):
+            return {
+                "success": False,
+                "message": f"源文件不存在: {source_file}",
+                "data": {}
+            }
+        
+        # 读取源文件
+        with open(source_file, 'r', encoding='utf-8') as f:
+            source_data = json.load(f)
+        
+        def count_keys(data, prefix=""):
+            count = 0
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    count += count_keys(value, f"{prefix}{key}.")
+                else:
+                    count += 1
+            return count
+        
+        source_keys = count_keys(source_data)
+        
+        # 检查所有语言文件
+        if not deepseek_translation_service:
+            return {
+                "success": False,
+                "message": "翻译服务未初始化",
+                "data": {}
+            }
+        
+        supported_languages = deepseek_translation_service.get_supported_languages()
+        results = {}
+        
+        for lang_code, lang_info in supported_languages.items():
+            if lang_code == source_lang:
+                results[lang_code] = {
+                    "name": lang_info["native"],
+                    "keys": source_keys,
+                    "complete": True,
+                    "completeness": 100.0,
+                    "missing": 0
+                }
+                continue
+            
+            target_file = os.path.join(i18n_directory, f"{lang_code}.json")
+            
+            if not os.path.exists(target_file):
+                results[lang_code] = {
+                    "name": lang_info["native"],
+                    "keys": 0,
+                    "complete": False,
+                    "completeness": 0.0,
+                    "missing": source_keys,
+                    "error": "文件不存在"
+                }
+                continue
+            
+            try:
+                with open(target_file, 'r', encoding='utf-8') as f:
+                    target_data = json.load(f)
+                
+                target_keys = count_keys(target_data)
+                completeness = (target_keys / source_keys) * 100 if source_keys > 0 else 0
+                
+                results[lang_code] = {
+                    "name": lang_info["native"],
+                    "keys": target_keys,
+                    "complete": target_keys == source_keys,
+                    "completeness": round(completeness, 1),
+                    "missing": max(0, source_keys - target_keys)
+                }
+                
+            except Exception as e:
+                results[lang_code] = {
+                    "name": lang_info["native"],
+                    "keys": 0,
+                    "complete": False,
+                    "completeness": 0.0,
+                    "missing": source_keys,
+                    "error": str(e)
+                }
+        
+        # 统计总体情况
+        complete_count = sum(1 for r in results.values() if r.get("complete", False))
+        total_count = len(results)
+        
+        return {
+            "success": True,
+            "message": f"完整性检查完成: {complete_count}/{total_count} 完整",
+            "data": {
+                "source_language": source_lang,
+                "source_keys": source_keys,
+                "total_languages": total_count,
+                "complete_languages": complete_count,
+                "incomplete_languages": total_count - complete_count,
+                "languages": results
+            }
+        }
+    
+    except Exception as e:
+        logger.error(f"检查i18n完整性API错误: {e}")
+        return {
+            "success": False,
+            "message": f"检查完整性失败: {str(e)}",
+            "data": {}
+        }
+
+@app.post("/api/translation/clear-cache")
+async def clear_translation_cache():
+    """清空翻译缓存"""
+    try:
+        if not deepseek_translation_service:
+            return {
+                "success": False,
+                "message": "翻译服务未初始化"
+            }
+        
+        deepseek_translation_service.clear_cache()
+        
+        return {
+            "success": True,
+            "message": "翻译缓存已清空"
+        }
+    
+    except Exception as e:
+        logger.error(f"清空缓存API错误: {e}")
+        return {
+            "success": False,
+            "message": f"清空缓存失败: {str(e)}"
+        }
 
 # 包含认证路由
 app.include_router(auth_router, prefix="/api/auth", tags=["用户认证"])
