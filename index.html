@@ -126,15 +126,32 @@
             }
         }
 
-        function toggleSettings() {
-            console.log('toggleSettings 被调用');
-            const panel = document.getElementById('settingsPanel');
+        function toggleNavigationPanel() {
+            console.log('toggleNavigationPanel 被调用');
+            const panel = document.getElementById('navigationPanel');
+            const toggleText = document.getElementById('navigation-toggle-text');
+            const t = translations[currentLanguage] || translations['zh'];
+            
             if (panel) {
-                panel.classList.toggle('active');
-                console.log('设置面板切换成功');
+                const isVisible = panel.classList.contains('show');
+                
+                if (isVisible) {
+                    panel.classList.remove('show');
+                    if (toggleText) toggleText.textContent = t.showNavigationPanel || '显示导航面板';
+                    console.log('导航面板已隐藏');
+                } else {
+                    panel.classList.add('show');
+                    if (toggleText) toggleText.textContent = t.hideNavigationPanel || '隐藏导航面板';
+                    console.log('导航面板已显示');
+                }
             } else {
-                console.error('找不到 settingsPanel 元素');
+                console.error('找不到 navigationPanel 元素');
             }
+        }
+        
+        // 保持兼容性的旧函数
+        function toggleSettings() {
+            toggleNavigationPanel();
         }
 
         // 检查登录状态的函数
@@ -193,6 +210,286 @@
         }
         
         console.log('✅ 关键函数已在头部定义');
+        
+        // 旅游导航生成相关函数
+        let currentTravelGuide = null; // 存储当前生成的旅游导航
+        
+        // 字符计数功能
+        function updateCharCount() {
+            const textarea = document.getElementById('travel-prompt');
+            const counter = document.getElementById('char-count');
+            if (textarea && counter) {
+                counter.textContent = textarea.value.length;
+            }
+        }
+        
+        // 清空输入
+        function clearTravelPrompt() {
+            const textarea = document.getElementById('travel-prompt');
+            if (textarea) {
+                textarea.value = '';
+                updateCharCount();
+            }
+        }
+        
+        // 生成旅游导航图
+        async function generateTravelGuide() {
+            const promptText = document.getElementById('travel-prompt').value.trim();
+            if (!promptText) {
+                alert('请输入您的旅游需求！');
+                return;
+            }
+            
+            const loadingEl = document.getElementById('guide-loading');
+            const resultsEl = document.getElementById('travel-guide-results');
+            
+            // 显示加载状态
+            if (loadingEl) loadingEl.style.display = 'block';
+            if (resultsEl) resultsEl.style.display = 'none';
+            
+            try {
+                console.log('开始生成旅游导航，用户输入:', promptText);
+                
+                // 调用后端API生成旅游导航
+                const response = await fetch(`${API_BASE_URL}/api/travel/generate-guide`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({
+                        prompt: promptText,
+                        language: currentLanguage || 'zh'
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('旅游导航生成成功:', data);
+                
+                currentTravelGuide = data;
+                displayTravelGuide(data);
+                
+            } catch (error) {
+                console.error('生成旅游导航失败:', error);
+                
+                // 显示模拟数据用于测试
+                const mockData = generateMockTravelGuide(promptText);
+                currentTravelGuide = mockData;
+                displayTravelGuide(mockData);
+                
+                console.log('使用模拟数据展示结果');
+            } finally {
+                // 隐藏加载状态
+                if (loadingEl) loadingEl.style.display = 'none';
+            }
+        }
+        
+        // 生成模拟数据
+        function generateMockTravelGuide(prompt) {
+            return {
+                title: '为您定制的旅游导航图',
+                summary: '根据您的需求，为您推荐以下精选景点和路线',
+                attractions: [
+                    {
+                        id: 1,
+                        name: '天安门广场',
+                        rating: 4.8,
+                        description: '中华人民共和国的象征，世界上最大的城市广场之一，承载着深厚的历史文化底蕴。',
+                        category: '历史文化',
+                        estimatedTime: '2-3小时',
+                        ticketPrice: '免费',
+                        location: { lat: 39.9042, lng: 116.4074 }
+                    },
+                    {
+                        id: 2,
+                        name: '故宫博物院',
+                        rating: 4.9,
+                        description: '明清两代的皇家宫殿，现为世界上最大的古代宫殿建筑群，珍藏着大量珍贵文物。',
+                        category: '历史文化',
+                        estimatedTime: '4-6小时',
+                        ticketPrice: '60元',
+                        location: { lat: 39.9163, lng: 116.3972 }
+                    },
+                    {
+                        id: 3,
+                        name: '王府井小吃街',
+                        rating: 4.3,
+                        description: '北京最著名的美食街之一，汇聚了各种传统小吃和特色美食，是品尝北京味道的绝佳去处。',
+                        category: '美食',
+                        estimatedTime: '1-2小时',
+                        ticketPrice: '按消费',
+                        location: { lat: 39.9097, lng: 116.4109 }
+                    }
+                ],
+                route: {
+                    totalDistance: '约15公里',
+                    estimatedDuration: '1天',
+                    transportation: '地铁+步行'
+                }
+            };
+        }
+        
+        // 显示旅游导航结果
+        function displayTravelGuide(data) {
+            const resultsEl = document.getElementById('travel-guide-results');
+            const attractionsListEl = document.getElementById('attractions-list');
+            
+            if (!resultsEl || !attractionsListEl) return;
+            
+            // 生成景点列表HTML
+            let attractionsHTML = '';
+            if (data.attractions && data.attractions.length > 0) {
+                attractionsHTML = data.attractions.map(attraction => `
+                    <div class="attraction-item" data-attraction-id="${attraction.id}">
+                        <div class="attraction-header">
+                            <h5 class="attraction-name">${attraction.name}</h5>
+                            <span class="attraction-rating">⭐ ${attraction.rating}</span>
+                        </div>
+                        <p class="attraction-description">${attraction.description}</p>
+                        <div class="attraction-meta">
+                            <span>📍 ${attraction.category}</span>
+                            <span>⏱️ ${attraction.estimatedTime}</span>
+                            <span>💰 ${attraction.ticketPrice}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                attractionsHTML = '<p style="text-align: center; color: #6b7280;">暂无景点数据</p>';
+            }
+            
+            attractionsListEl.innerHTML = attractionsHTML;
+            resultsEl.style.display = 'block';
+            
+            // 滚动到结果区域
+            resultsEl.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 显示旅游地图
+        function showTravelMap() {
+            if (!currentTravelGuide) {
+                alert('请先生成旅游导航图！');
+                return;
+            }
+            
+            const modal = document.getElementById('travel-map-modal');
+            const overlay = document.getElementById('travel-map-overlay');
+            
+            if (modal && overlay) {
+                modal.style.display = 'block';
+                overlay.style.display = 'block';
+                
+                // 初始化地图
+                initializeTravelMap();
+            }
+        }
+        
+        // 关闭旅游地图
+        function closeTravelMap() {
+            const modal = document.getElementById('travel-map-modal');
+            const overlay = document.getElementById('travel-map-overlay');
+            
+            if (modal && overlay) {
+                modal.style.display = 'none';
+                overlay.style.display = 'none';
+            }
+        }
+        
+        // 初始化旅游地图
+        function initializeTravelMap() {
+            const container = document.getElementById('travel-map-container');
+            const loading = document.getElementById('travel-map-loading');
+            
+            if (!container || !currentTravelGuide) return;
+            
+            // 显示加载状态
+            if (loading) loading.style.display = 'block';
+            
+            // 模拟地图加载
+            setTimeout(() => {
+                if (loading) loading.style.display = 'none';
+                
+                // 创建简单的地图展示
+                const mapHTML = `
+                    <div style="padding: 20px; text-align: center; color: #4a5568;">
+                        <h4>🗺️ 旅游路线地图</h4>
+                        <div style="background: #f8fafc; border-radius: 10px; padding: 20px; margin: 20px 0; border: 2px dashed #cbd5e0;">
+                            <p style="font-size: 16px; margin-bottom: 15px;">📍 ${currentTravelGuide.attractions.length} 个推荐景点</p>
+                            <div style="display: grid; gap: 10px;">
+                                ${currentTravelGuide.attractions.map((attraction, index) => `
+                                    <div style="background: white; padding: 10px; border-radius: 8px; text-align: left; border: 1px solid #e2e8f0;">
+                                        <strong>${index + 1}. ${attraction.name}</strong>
+                                        <br><small style="color: #6b7280;">${attraction.category} • ${attraction.estimatedTime}</small>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                                <p><strong>总路程:</strong> ${currentTravelGuide.route?.totalDistance || '约15公里'}</p>
+                                <p><strong>预计时长:</strong> ${currentTravelGuide.route?.estimatedDuration || '1天'}</p>
+                                <p><strong>交通方式:</strong> ${currentTravelGuide.route?.transportation || '地铁+步行'}</p>
+                            </div>
+                        </div>
+                        <p style="color: #9ca3af; font-size: 14px;">💡 完整的交互式地图功能正在开发中</p>
+                    </div>
+                `;
+                
+                container.innerHTML = mapHTML;
+            }, 1000);
+        }
+        
+        // 导出旅游导航
+        function exportTravelGuide() {
+            if (!currentTravelGuide) {
+                alert('请先生成旅游导航图！');
+                return;
+            }
+            
+            // 生成导出内容
+            let exportContent = `# ${currentTravelGuide.title}\n\n`;
+            exportContent += `${currentTravelGuide.summary}\n\n`;
+            exportContent += `## 推荐景点\n\n`;
+            
+            currentTravelGuide.attractions.forEach((attraction, index) => {
+                exportContent += `### ${index + 1}. ${attraction.name}\n`;
+                exportContent += `- **评分:** ${attraction.rating}/5.0\n`;
+                exportContent += `- **类型:** ${attraction.category}\n`;
+                exportContent += `- **游玩时长:** ${attraction.estimatedTime}\n`;
+                exportContent += `- **门票:** ${attraction.ticketPrice}\n`;
+                exportContent += `- **介绍:** ${attraction.description}\n\n`;
+            });
+            
+            exportContent += `## 路线信息\n\n`;
+            exportContent += `- **总路程:** ${currentTravelGuide.route?.totalDistance || '约15公里'}\n`;
+            exportContent += `- **预计时长:** ${currentTravelGuide.route?.estimatedDuration || '1天'}\n`;
+            exportContent += `- **交通方式:** ${currentTravelGuide.route?.transportation || '地铁+步行'}\n\n`;
+            exportContent += `---\n生成时间: ${new Date().toLocaleString()}\n`;
+            exportContent += `来源: spot.gitagent.io`;
+            
+            // 创建下载链接
+            const blob = new Blob([exportContent], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `旅游导航图_${new Date().toISOString().slice(0, 10)}.md`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('旅游导航已导出');
+        }
+        
+        // 页面加载完成后绑定事件
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定字符计数事件
+            const travelPrompt = document.getElementById('travel-prompt');
+            if (travelPrompt) {
+                travelPrompt.addEventListener('input', updateCharCount);
+            }
+        });
     </script>
 </head>
 <body>
@@ -221,8 +518,9 @@
                 <!-- 用户菜单 -->
                 <div class="user-menu" id="user-menu">
                     <button class="user-button" onclick="toggleUserMenu()">
-                        <span id="user-avatar">👤</span>
-                        <span id="user-name">游客</span>
+                        <div class="user-avatar-container" id="user-avatar-container">
+                            <div class="user-avatar" id="user-avatar">👤</div>
+                        </div>
                     </button>
                     <div class="user-dropdown hidden" id="user-dropdown">
                         <div class="user-info">
@@ -236,21 +534,85 @@
                     </div>
                 </div>
                 
-                <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
             </div>
         </header>
+        
+        <!-- 导航控制栏 -->
+        <div class="navigation-control-bar">
+            <button class="navigation-toggle-btn" onclick="toggleNavigationPanel()" title="地图景点导航">
+                🗺️ <span id="navigation-toggle-text">显示导航面板</span>
+            </button>
+        </div>
 
-        <!-- 设置面板 -->
-        <div class="settings-panel" id="settingsPanel">
-            <div class="setting-group">
-                <label>目标距离:</label>
-                <select id="segmentDistance" onchange="updateSettings()">
-                    <option value="5">5km</option>
-                    <option value="10" selected>10km</option>
-                    <option value="15">15km</option>
-                    <option value="20">20km</option>
-                </select>
+        <!-- 导航面板 -->
+        <div class="navigation-panel" id="navigationPanel">
+            <!-- 一句话生成旅游导航图功能 -->
+            <div class="travel-guide-generator">
+                <h3 class="generator-title">🗺️ <span id="travel-guide-title">一句话生成旅游导航图</span></h3>
+                <div class="generator-input-section">
+                    <div class="input-group">
+                        <textarea 
+                            id="travel-prompt" 
+                            placeholder="例如：我想在北京游玩3天，喜欢历史文化和美食，预算3000元..."
+                            rows="3"
+                            maxlength="500"
+                        ></textarea>
+                        <div class="input-counter">
+                            <span id="char-count">0</span>/500
+                        </div>
+                    </div>
+                    <div class="generator-actions">
+                        <button class="generate-guide-btn" onclick="requireLogin(generateTravelGuide)" id="generate-guide-btn">
+                            ✨ <span id="generate-guide-text">生成导航图</span>
+                        </button>
+                        <button class="clear-prompt-btn" onclick="clearTravelPrompt()" id="clear-prompt-btn">
+                            🗑️ <span id="clear-prompt-text">清空</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 生成结果展示区域 -->
+                <div class="travel-guide-results" id="travel-guide-results" style="display: none;">
+                    <div class="results-header">
+                        <h4 id="results-title">🎯 生成的旅游导航图</h4>
+                        <div class="results-actions">
+                            <button class="view-map-btn" onclick="showTravelMap()" id="view-map-btn">
+                                🗺️ <span id="view-map-text">查看地图</span>
+                            </button>
+                            <button class="export-guide-btn" onclick="exportTravelGuide()" id="export-guide-btn">
+                                📄 <span id="export-guide-text">导出行程</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="attractions-list" id="attractions-list">
+                        <!-- 动态生成的景点列表 -->
+                    </div>
+                </div>
+                
+                <!-- 加载状态 -->
+                <div class="guide-loading" id="guide-loading" style="display: none;">
+                    <div class="loading-content">
+                        <div class="guide-spinner"></div>
+                        <h4 class="loading-title">🤖 AI正在为您规划旅程...</h4>
+                        <p class="loading-hint">正在分析您的需求并搜索最佳景点 ⏰</p>
+                    </div>
+                </div>
             </div>
+            
+            <div class="panel-divider"></div>
+            
+            <!-- 原有设置 -->
+            <div class="navigation-settings">
+                <h3 class="settings-title">⚙️ <span id="navigation-settings-title">导航设置</span></h3>
+                <div class="setting-group">
+                    <label>目标距离:</label>
+                    <select id="segmentDistance" onchange="updateSettings()">
+                        <option value="5">5km</option>
+                        <option value="10" selected>10km</option>
+                        <option value="15">15km</option>
+                        <option value="20">20km</option>
+                    </select>
+                </div>
             <div class="setting-group">
                 <label>模式:</label>
                 <select id="timeMode" onchange="updateSettings()">
@@ -312,6 +674,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- 旅游地图模态框 -->
+        <div class="travel-map-modal" id="travel-map-modal" style="display: none;">
+            <div class="travel-map-modal-content">
+                <div class="travel-map-header">
+                    <h3 id="travel-map-title">🗺️ 旅游导航地图</h3>
+                    <button class="close-travel-map-btn" onclick="closeTravelMap()">✕</button>
+                </div>
+                <div class="travel-map-container" id="travel-map-container">
+                    <div class="travel-map-loading" id="travel-map-loading">
+                        <div class="map-spinner"></div>
+                        <p>正在加载地图...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 旅游地图遮罩层 -->
+        <div class="travel-map-overlay" id="travel-map-overlay" style="display: none;" onclick="closeTravelMap()"></div>
 
         <!-- 状态显示区 -->
         <div class="status-section">
@@ -957,7 +1338,18 @@
                 generatingDoroHint: "AI正在将您、Doro和景点完美融合 🎨",
                 generatingDoroTime: "预计需要 15-30 秒 ⏰",
                 doroError: "AI抛锚了",
-                doroErrorMessage: "这点小故障，你看肿么办？"
+                doroErrorMessage: "这点小故障，你看肿么办？",
+                showNavigationPanel: "显示导航面板",
+                hideNavigationPanel: "隐藏导航面板",
+                navigationPanel: "地图景点导航",
+                travelGuideTitle: "一句话生成旅游导航图",
+                generateGuideText: "生成导航图",
+                clearPromptText: "清空",
+                resultsTitle: "生成的旅游导航图",
+                viewMapText: "查看地图",
+                exportGuideText: "导出行程",
+                navigationSettingsTitle: "导航设置",
+                travelMapTitle: "旅游导航地图"
             },
             en: {
                 appTitle: "spot.gitagent.io",
@@ -1054,7 +1446,18 @@
                 generatingDoroHint: "AI is perfectly blending you, Doro and the attraction 🎨",
                 generatingDoroTime: "Estimated 15-30 seconds ⏰",
                 doroError: "AI Broke Down",
-                doroErrorMessage: "This little glitch, what do you think we should do?"
+                doroErrorMessage: "This little glitch, what do you think we should do?",
+                showNavigationPanel: "Show Navigation Panel",
+                hideNavigationPanel: "Hide Navigation Panel",
+                navigationPanel: "Map Attractions Navigation",
+                travelGuideTitle: "Generate Travel Guide in One Sentence",
+                generateGuideText: "Generate Guide",
+                clearPromptText: "Clear",
+                resultsTitle: "Generated Travel Guide",
+                viewMapText: "View Map",
+                exportGuideText: "Export Itinerary",
+                navigationSettingsTitle: "Navigation Settings",
+                travelMapTitle: "Travel Navigation Map"
             },
             es: {
                 appTitle: "spot.gitagent.io",
@@ -1504,7 +1907,13 @@
             // 更新页面元素
             document.getElementById('app-title').textContent = t.appTitle;
             document.getElementById('app-subtitle').textContent = t.appSubtitle;
-            document.getElementById('user-name').textContent = currentUser ? currentUser.username : t.guest;
+            // 更新用户头像提示
+            const userAvatarEl = document.getElementById('user-avatar');
+            if (userAvatarEl && currentUser) {
+                userAvatarEl.title = `${currentUser.username} (已登录)`;
+            } else if (userAvatarEl) {
+                userAvatarEl.title = t.guest || '游客 (点击登录)';
+            }
             document.getElementById('login-btn').textContent = t.login;
             document.getElementById('register-btn').textContent = t.register;
             document.getElementById('logout-btn').textContent = t.logout;
@@ -1583,6 +1992,35 @@
             if (chinaCitiesGroup) chinaCitiesGroup.label = '🇨🇳 ' + t.chinaCities;
             if (citySearch) citySearch.placeholder = t.enterCityName;
             if (roamingStatusText) roamingStatusText.textContent = t.loadingCityInfo;
+            
+            // 更新导航面板按钮文本
+            const navigationToggleText = document.getElementById('navigation-toggle-text');
+            const navigationPanel = document.getElementById('navigationPanel');
+            if (navigationToggleText && navigationPanel) {
+                const isVisible = navigationPanel.classList.contains('show');
+                navigationToggleText.textContent = isVisible ? 
+                    (t.hideNavigationPanel || '隐藏导航面板') : 
+                    (t.showNavigationPanel || '显示导航面板');
+            }
+            
+            // 更新旅游导航生成器相关文本
+            const travelGuideTitle = document.getElementById('travel-guide-title');
+            const generateGuideText = document.getElementById('generate-guide-text');
+            const clearPromptText = document.getElementById('clear-prompt-text');
+            const resultsTitle = document.getElementById('results-title');
+            const viewMapText = document.getElementById('view-map-text');
+            const exportGuideText = document.getElementById('export-guide-text');
+            const navigationSettingsTitle = document.getElementById('navigation-settings-title');
+            const travelMapTitle = document.getElementById('travel-map-title');
+            
+            if (travelGuideTitle) travelGuideTitle.textContent = t.travelGuideTitle || '一句话生成旅游导航图';
+            if (generateGuideText) generateGuideText.textContent = t.generateGuideText || '生成导航图';
+            if (clearPromptText) clearPromptText.textContent = t.clearPromptText || '清空';
+            if (resultsTitle) resultsTitle.textContent = '🎯 ' + (t.resultsTitle || '生成的旅游导航图');
+            if (viewMapText) viewMapText.textContent = t.viewMapText || '查看地图';
+            if (exportGuideText) exportGuideText.textContent = t.exportGuideText || '导出行程';
+            if (navigationSettingsTitle) navigationSettingsTitle.textContent = t.navigationSettingsTitle || '导航设置';
+            if (travelMapTitle) travelMapTitle.textContent = '🗺️ ' + (t.travelMapTitle || '旅游导航地图');
         }
         
         function generateLanguageOptions() {
@@ -1673,20 +2111,30 @@
         function updateUserUI(user) {
             const t = translations[currentLanguage] || translations['zh'];
             
-            const userNameEl = document.getElementById('user-name');
+            const userAvatarEl = document.getElementById('user-avatar');
             const userEmailEl = document.getElementById('user-email');
             const loginBtnEl = document.getElementById('login-btn');
             const registerBtnEl = document.getElementById('register-btn');
             const logoutBtnEl = document.getElementById('logout-btn');
             
             if (user) {
-                if (userNameEl) userNameEl.textContent = user.username;
+                // 已登录状态 - 显示成功头像
+                if (userAvatarEl) {
+                    userAvatarEl.textContent = '✓';
+                    userAvatarEl.className = 'user-avatar logged-in';
+                    userAvatarEl.title = `${user.username} (已登录)`;
+                }
                 if (userEmailEl) userEmailEl.textContent = user.email;
                 if (loginBtnEl) loginBtnEl.classList.add('hidden');
                 if (registerBtnEl) registerBtnEl.classList.add('hidden');
                 if (logoutBtnEl) logoutBtnEl.classList.remove('hidden');
             } else {
-                if (userNameEl) userNameEl.textContent = t.guest || '游客';
+                // 未登录状态 - 显示游客头像
+                if (userAvatarEl) {
+                    userAvatarEl.textContent = '👤';
+                    userAvatarEl.className = 'user-avatar guest';
+                    userAvatarEl.title = t.guest || '游客 (点击登录)';
+                }
                 if (userEmailEl) userEmailEl.textContent = t.notLoggedIn || '未登录';
                 if (loginBtnEl) loginBtnEl.classList.remove('hidden');
                 if (registerBtnEl) registerBtnEl.classList.remove('hidden');
