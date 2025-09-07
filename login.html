@@ -295,12 +295,17 @@
                     // 通知父窗口登录成功
                     if (window.opener) {
                         window.opener.postMessage({ type: 'login-success', data }, '*');
+                        
+                        // 立即关闭窗口
+                        setTimeout(() => {
+                            window.close();
+                        }, 500);
+                    } else {
+                        // 如果没有父窗口，稍微延迟后关闭
+                        setTimeout(() => {
+                            window.close();
+                        }, 1500);
                     }
-                    
-                    // 延迟关闭窗口
-                    setTimeout(() => {
-                        window.close();
-                    }, 1000);
                 } else {
                     showError('login', data.detail || '登录失败，请重试');
                 }

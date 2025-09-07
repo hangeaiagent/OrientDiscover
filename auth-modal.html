@@ -698,16 +698,19 @@
                         
                         showSuccess(translations[currentLanguage].loginSuccess);
                         
-                        // 通知父窗口登录成功
-                        setTimeout(() => {
-                            if (window.parent) {
-                                window.parent.postMessage({ 
-                                    action: 'authSuccess',
-                                    user: result.user,
-                                    session: result.session
-                                }, '*');
-                            }
-                        }, 1500);
+                        // 通知父窗口登录成功并立即关闭
+                        if (window.parent) {
+                            window.parent.postMessage({ 
+                                action: 'authSuccess',
+                                user: result.user,
+                                session: result.session
+                            }, '*');
+                            
+                            // 延迟关闭模态框
+                            setTimeout(() => {
+                                window.parent.postMessage({ action: 'closeAuthModal' }, '*');
+                            }, 800);
+                        }
                         return;
                     } catch (supabaseError) {
                         console.log('⚠️ Supabase登录失败，尝试后端API:', supabaseError.message);
@@ -744,16 +747,19 @@
                     
                     showSuccess(translations[currentLanguage].loginSuccess);
                     
-                    // 通知父窗口登录成功
-                    setTimeout(() => {
-                        if (window.parent) {
-                            window.parent.postMessage({ 
-                                action: 'authSuccess',
-                                token: data.access_token,
-                                user: data.user
-                            }, '*');
-                        }
-                    }, 1500);
+                    // 通知父窗口登录成功并立即关闭
+                    if (window.parent) {
+                        window.parent.postMessage({ 
+                            action: 'authSuccess',
+                            token: data.access_token,
+                            user: data.user
+                        }, '*');
+                        
+                        // 延迟关闭模态框
+                        setTimeout(() => {
+                            window.parent.postMessage({ action: 'closeAuthModal' }, '*');
+                        }, 800);
+                    }
                 } else {
                     console.error('❌ 后端API登录失败:', response.status, data);
                     showError(data.detail || translations[currentLanguage].loginFailed);

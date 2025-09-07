@@ -671,12 +671,12 @@ class GlobalCitiesDB:
         
         # 中国知名旅游城市景点数据
         self.china_cities = {
-            # 北京 (使用现有数据)
+            # 北京 (集成LocalAttractionsDB数据)
             "beijing": {
                 "name": "北京",
-                "country": "中国",
+                "country": "中国", 
                 "coordinates": [39.9042, 116.4074],
-                "attractions": []  # 将从现有LocalAttractionsDB获取
+                "attractions": "use_local_db"  # 标记使用本地数据库
             },
             
             # 西安
@@ -973,13 +973,20 @@ class GlobalCitiesDB:
         
         # 添加中国城市
         for city_key, city_data in self.china_cities.items():
+            # 特殊处理北京：计算本地数据库的景点数量
+            if city_key == "beijing" and city_data["attractions"] == "use_local_db":
+                from local_attractions_db import local_attractions_db
+                attraction_count = len(local_attractions_db.attractions)
+            else:
+                attraction_count = len(city_data["attractions"]) if isinstance(city_data["attractions"], list) else 0
+            
             cities.append({
                 "key": city_key,
                 "name": city_data["name"],
                 "country": city_data["country"],
                 "coordinates": city_data["coordinates"],
                 "type": "china",
-                "attraction_count": len(city_data["attractions"])
+                "attraction_count": attraction_count
             })
         
         return cities
@@ -989,7 +996,13 @@ class GlobalCitiesDB:
         if city_key in self.global_cities:
             return self.global_cities[city_key]["attractions"]
         elif city_key in self.china_cities:
-            return self.china_cities[city_key]["attractions"]
+            city_data = self.china_cities[city_key]
+            # 特殊处理北京：从本地数据库获取景点
+            if city_key == "beijing" and city_data["attractions"] == "use_local_db":
+                from local_attractions_db import local_attractions_db
+                return local_attractions_db.attractions
+            else:
+                return city_data["attractions"] if isinstance(city_data["attractions"], list) else []
         return []
     
     def get_random_attraction(self, city_key: str) -> Optional[Dict]:
@@ -1037,18 +1050,29 @@ class GlobalCitiesDB:
         
         # 搜索中国城市景点
         for city_key, city_data in self.china_cities.items():
-            for attraction in city_data["attractions"]:
-                distance = self._calculate_distance(
-                    latitude, longitude,
-                    attraction["latitude"], attraction["longitude"]
-                )
-                if distance <= radius_km:
+            # 特殊处理北京：使用LocalAttractionsDB数据
+            if city_key == "beijing" and city_data["attractions"] == "use_local_db":
+                from local_attractions_db import local_attractions_db
+                local_attractions = local_attractions_db.find_nearby_attractions(latitude, longitude, radius_km)
+                for attraction in local_attractions:
                     attraction_copy = attraction.copy()
-                    attraction_copy["distance"] = distance
+                    attraction_copy["distance"] = attraction.get("distance_to_point", 0)
                     nearby_attractions.append(attraction_copy)
+            else:
+                # 处理其他城市的常规景点数据
+                if isinstance(city_data["attractions"], list):
+                    for attraction in city_data["attractions"]:
+                        distance = self._calculate_distance(
+                            latitude, longitude,
+                            attraction["latitude"], attraction["longitude"]
+                        )
+                        if distance <= radius_km:
+                            attraction_copy = attraction.copy()
+                            attraction_copy["distance"] = distance
+                            nearby_attractions.append(attraction_copy)
         
         # 按距离排序
-        nearby_attractions.sort(key=lambda x: x["distance"])
+        nearby_attractions.sort(key=lambda x: x.get("distance", 999))
         return nearby_attractions
     
     def _calculate_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:

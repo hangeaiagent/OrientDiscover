@@ -11,17 +11,21 @@
     <!-- Supabase客户端 -->
     <script src="./supabase-client.js"></script>
     <style>
-        /* 指南针Logo样式 */
+        /* 指南针Logo样式 - 响应式设计 */
         .compass-logo {
             display: inline-block;
-            width: 32px;
-            height: 32px;
+            /* 使用clamp确保Logo在不同屏幕尺寸下保持适当大小 */
+            width: clamp(28px, 4vw, 36px);
+            height: clamp(28px, 4vw, 36px);
             border: 3px solid #333;
             border-radius: 50%;
             position: relative;
             margin-right: 12px;
             vertical-align: middle;
             background: white;
+            /* 确保Logo保持圆形 */
+            flex-shrink: 0;
+            aspect-ratio: 1 / 1;
         }
         
         .compass-logo::before {
@@ -31,9 +35,10 @@
             left: 50%;
             width: 0;
             height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-bottom: 12px solid #1976d2;
+            /* 指针大小相对于Logo大小自适应 */
+            border-left: clamp(4px, 0.8vw, 7px) solid transparent;
+            border-right: clamp(4px, 0.8vw, 7px) solid transparent;
+            border-bottom: clamp(8px, 1.6vw, 14px) solid #1976d2;
             transform: translate(-50%, -50%);
         }
         
@@ -44,9 +49,10 @@
             left: 50%;
             width: 0;
             height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 12px solid #d32f2f;
+            /* 指针大小相对于Logo大小自适应 */
+            border-left: clamp(4px, 0.8vw, 7px) solid transparent;
+            border-right: clamp(4px, 0.8vw, 7px) solid transparent;
+            border-top: clamp(8px, 1.6vw, 14px) solid #d32f2f;
             transform: translate(-50%, -50%);
         }
         
@@ -55,7 +61,7 @@
             top: 2px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 10px;
+            font-size: clamp(8px, 1.2vw, 12px);
             font-weight: bold;
             color: #333;
         }
@@ -65,7 +71,7 @@
             right: 2px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 10px;
+            font-size: clamp(8px, 1.2vw, 12px);
             font-weight: bold;
             color: #333;
         }
@@ -75,7 +81,7 @@
             bottom: 2px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 10px;
+            font-size: clamp(8px, 1.2vw, 12px);
             font-weight: bold;
             color: #333;
         }
@@ -85,7 +91,7 @@
             left: 2px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 10px;
+            font-size: clamp(8px, 1.2vw, 12px);
             font-weight: bold;
             color: #333;
         }

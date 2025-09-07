@@ -4844,6 +4844,40 @@ function regenerateWithCurrentStyle() {
     generateSelfie();
 }
 
+// 自动滑动到生成等待界面
+function scrollToGenerationLoading() {
+    // 延迟执行滚动，确保loading元素已显示
+    setTimeout(() => {
+        // 查找生成等待界面的元素
+        const loadingElement = document.getElementById('selfieLoading');
+        
+        if (loadingElement) {
+            // 先显示loading元素
+            loadingElement.style.display = 'block';
+            
+            // 平滑滚动到等待界面
+            loadingElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'nearest'
+            });
+            logger.info('🎯 自动滑动到生成等待界面');
+        } else {
+            // 如果找不到等待界面，尝试滚动到模态框的loading区域
+            const modal = document.getElementById('selfieModal');
+            if (modal && modal.style.display !== 'none') {
+                // 查找模态框内的滚动容器
+                const modalBody = modal.querySelector('.selfie-body');
+                if (modalBody) {
+                    // 滚动到模态框body的底部（loading通常在底部）
+                    modalBody.scrollTop = modalBody.scrollHeight - modalBody.clientHeight;
+                    logger.info('🎯 滑动到模态框loading区域');
+                }
+            }
+        }
+    }, 100);
+}
+
 // 合影生成函数
 function generateSelfie() {
     logger.info('🎨 开始生成合影');
@@ -4861,6 +4895,9 @@ function generateSelfie() {
         alert('请先选择您的照片');
         return;
     }
+    
+    // 🎯 自动滑动到生成等待界面
+    scrollToGenerationLoading();
     
     const { name, location, index } = window.currentAttractionInfo;
     logger.info(`📸 ${t('generatePhoto')} - 景点: ${name}, 位置: ${location}, 索引: ${index}`);
@@ -4937,6 +4974,7 @@ window.handleStylePhotoUpload = handleStylePhotoUpload;
 window.resetSelfieGenerator = resetSelfieGenerator;
 window.regenerateWithCurrentStyle = regenerateWithCurrentStyle;
 window.closeSelfieModal = closeSelfieModal;
+window.scrollToGenerationLoading = scrollToGenerationLoading;
 
 // ==================== Doro合影功能 ====================
 
@@ -5342,12 +5380,49 @@ function updateGenerateButton() {
     }
 }
 
+// 自动滑动到Doro生成等待界面
+function scrollToDoroGenerationLoading() {
+    // 延迟执行滚动，确保loading元素已显示
+    setTimeout(() => {
+        // 查找Doro生成等待界面的元素
+        const loadingElement = document.getElementById('doroLoading');
+        
+        if (loadingElement) {
+            // 先显示loading元素
+            loadingElement.style.display = 'block';
+            
+            // 平滑滚动到等待界面
+            loadingElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center',
+                inline: 'nearest'
+            });
+            logger.info('🎯 自动滑动到Doro生成等待界面');
+        } else {
+            // 如果找不到等待界面，尝试滚动到模态框的loading区域
+            const modal = document.getElementById('doroSelfieModal');
+            if (modal && modal.style.display !== 'none') {
+                // 查找模态框内的滚动容器
+                const modalBody = modal.querySelector('.doro-body');
+                if (modalBody) {
+                    // 滚动到模态框body的底部（loading通常在底部）
+                    modalBody.scrollTop = modalBody.scrollHeight - modalBody.clientHeight;
+                    logger.info('🎯 滑动到Doro模态框loading区域');
+                }
+            }
+        }
+    }, 100);
+}
+
 // 生成Doro合影
 async function generateDoroSelfie() {
     if (!doroSelfieData.userPhoto || !doroSelfieData.selectedDoro) {
         alert('请完成所有必要步骤');
         return;
     }
+    
+    // 🎯 自动滑动到Doro生成等待界面
+    scrollToDoroGenerationLoading();
     
     let place = null;
     
@@ -5540,6 +5615,9 @@ async function generateDoroVideo() {
         alert('请完成所有必要步骤');
         return;
     }
+    
+    // 🎯 自动滑动到Doro生成等待界面（视频和图片共用同一个loading元素）
+    scrollToDoroGenerationLoading();
     
     let place = null;
     
@@ -5742,5 +5820,6 @@ window.shareDoroSelfie = shareDoroSelfie;
 window.shareDoroVideo = shareDoroVideo;
 window.downloadSelfie = downloadSelfie;
 window.shareSelfie = shareSelfie;
+window.scrollToDoroGenerationLoading = scrollToDoroGenerationLoading;
 
 // 版本标识 - 强制浏览器重新加载 - 2025-09-04 01:30 - Doro模态框JavaScript修复版本
