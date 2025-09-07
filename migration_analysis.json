@@ -1,0 +1,76 @@
+{
+  "analysis_timestamp": "2024-12-13",
+  "data_summary": {
+    "local_attractions_count": 23,
+    "global_cities_count": 13,
+    "total_attractions_count": 101
+  },
+  "field_mapping": {
+    "name": "name",
+    "latitude": "location (POINT)",
+    "longitude": "location (POINT)",
+    "category": "category",
+    "description": "description (多语言内容表)",
+    "opening_hours": "opening_hours",
+    "ticket_price": "ticket_price",
+    "booking_method": "booking_method",
+    "image": "main_image_url",
+    "video": "video_url",
+    "country": "country",
+    "city": "city",
+    "address": "address"
+  },
+  "migration_strategy": {
+    "tables_to_populate": [
+      "spot_attractions",
+      "spot_attraction_contents",
+      "spot_attraction_media"
+    ],
+    "migration_steps": [
+      {
+        "step": 1,
+        "description": "迁移本地北京景点数据到spot_attractions表",
+        "source": "local_attractions_db.py",
+        "target": "spot_attractions",
+        "count": 23
+      },
+      {
+        "step": 2,
+        "description": "迁移全球城市景点数据到spot_attractions表",
+        "source": "global_cities_db.py",
+        "target": "spot_attractions",
+        "count": 78
+      },
+      {
+        "step": 3,
+        "description": "创建中文描述内容到spot_attraction_contents表",
+        "source": "description字段",
+        "target": "spot_attraction_contents",
+        "language_code": "zh-CN"
+      },
+      {
+        "step": 4,
+        "description": "迁移图片和视频URL到spot_attraction_media表",
+        "source": "image/video字段",
+        "target": "spot_attraction_media"
+      }
+    ],
+    "data_transformations": [
+      {
+        "field": "location",
+        "transformation": "将latitude/longitude转换为PostGIS POINT格式",
+        "example": "ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)"
+      },
+      {
+        "field": "description",
+        "transformation": "移动到多语言内容表，设置language_code='zh-CN'",
+        "target_table": "spot_attraction_contents"
+      },
+      {
+        "field": "image/video",
+        "transformation": "创建媒体记录，设置media_type和is_primary",
+        "target_table": "spot_attraction_media"
+      }
+    ]
+  }
+}
