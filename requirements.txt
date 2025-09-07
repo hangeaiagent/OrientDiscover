@@ -22,9 +22,20 @@ supabase>=2.0.0
 postgrest>=0.13.0
 gotrue>=2.0.0
 
+# CAMEL多智能体框架
+camel-ai>=0.1.0
+transformers>=4.30.0
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0
+
+# 向量数据库和嵌入
+pgvector>=0.2.0
+chromadb>=0.4.0
+
 # 其他可能需要的依赖
 pillow>=9.0.0
 numpy>=1.21.0
 psycopg2-binary>=2.9.0
 sqlalchemy>=2.0.0
 alembic>=1.13.0
+pydantic-settings>=2.0.0

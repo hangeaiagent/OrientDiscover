@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一句话生成旅游导航图 - AI智能旅游规划</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .input-section h2 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-container {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .prompt-input {
+            width: 100%;
+            padding: 20px 25px;
+            font-size: 1.1em;
+            border: 2px solid #e1e8ed;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .prompt-input:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .generate-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .examples h3 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #666;
+            text-align: center;
+        }
+
+        .example-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .example-tag {
+            background: #f1f3f4;
+            color: #5f6368;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e8eaed;
+        }
+
+        .example-tag:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .result-section {
+            display: none;
+            padding: 40px;
+            border-top: 1px solid #eee;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .album-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .album-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .album-description {
+            font-size: 1.1em;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .album-meta {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+        }
+
+        .attractions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .attraction-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
+        }
+
+        .attraction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .attraction-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+        }
+
+        .attraction-content {
+            padding: 20px;
+        }
+
+        .attraction-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .attraction-category {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .attraction-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .attraction-details {
+            border-top: 1px solid #f0f0f0;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .detail-label {
+            color: #888;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #333;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #fcc;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #363;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #cfc;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .input-section {
+                padding: 30px 20px;
+            }
+
+            .attractions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .album-meta {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        .processing-steps {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .processing-steps.active {
+            display: block;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: #f0f4ff;
+            color: #667eea;
+        }
+
+        .step.completed {
+            background: #f0fff4;
+            color: #22c55e;
+        }
+
+        .step-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-magic"></i> AI旅游导航图生成器</h1>
+            <p>一句话描述你的旅行想法，AI为你规划完美行程</p>
+        </div>
+
+        <div class="main-card">
+            <div class="input-section">
+                <h2>告诉我你想去哪里，想体验什么</h2>
+                <div class="input-container">
+                    <input 
+                        type="text" 
+                        class="prompt-input" 
+                        id="userPrompt" 
+                        placeholder="例如：我想去北京看历史文化，体验传统建筑和美食..."
+                        maxlength="200"
+                    >
+                    <button class="generate-btn" id="generateBtn">
+                        <i class="fas fa-wand-magic-sparkles"></i> 生成旅游相册
+                    </button>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <span>AI正在为您规划行程...</span>
+                    </div>
+
+                    <div class="processing-steps" id="processingSteps">
+                        <div class="step" id="step1">
+                            <div class="step-icon"><i class="fas fa-search"></i></div>
+                            <span>需求分析师正在分析您的需求...</span>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-icon"><i class="fas fa-map-marked-alt"></i></div>
+                            <span>景点搜索专家正在寻找匹配的景点...</span>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-icon"><i class="fas fa-pen-fancy"></i></div>
+                            <span>内容创作者正在生成详细介绍...</span>
+                        </div>
+                        <div class="step" id="step4">
+                            <div class="step-icon"><i class="fas fa-images"></i></div>
+                            <span>媒体管理员正在获取图片资源...</span>
+                        </div>
+                        <div class="step" id="step5">
+                            <div class="step-icon"><i class="fas fa-book"></i></div>
+                            <span>相册组织者正在整理最终相册...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="examples">
+                    <h3>试试这些示例</h3>
+                    <div class="example-tags">
+                        <div class="example-tag" onclick="fillExample('我想去北京体验传统文化，看故宫、长城，品尝老北京美食')">北京文化之旅</div>
+                        <div class="example-tag" onclick="fillExample('想去上海感受现代都市魅力，看外滩夜景，逛南京路')">上海都市体验</div>
+                        <div class="example-tag" onclick="fillExample('计划去西安探索古代历史，参观兵马俑、大雁塔，体验古城文化')">西安历史探索</div>
+                        <div class="example-tag" onclick="fillExample('想去杭州享受江南风情，游西湖、品龙井茶，体验园林美景')">杭州江南之旅</div>
+                        <div class="example-tag" onclick="fillExample('去成都品尝美食文化，看大熊猫，体验休闲慢生活')">成都美食之旅</div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="testAPI()">
+                        <i class="fas fa-flask"></i> 测试API连接
+                    </button>
+                    <button class="quick-btn" onclick="checkHealth()">
+                        <i class="fas fa-heartbeat"></i> 系统健康检查
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-section" id="resultSection">
+                <div class="album-header">
+                    <div class="album-title" id="albumTitle"></div>
+                    <div class="album-description" id="albumDescription"></div>
+                    <div class="album-meta" id="albumMeta"></div>
+                </div>
+
+                <div class="attractions-grid" id="attractionsGrid"></div>
+
+                <div class="actions">
+                    <button class="action-btn btn-primary" onclick="saveAlbum()">
+                        <i class="fas fa-save"></i> 保存相册
+                    </button>
+                    <button class="action-btn btn-secondary" onclick="shareAlbum()">
+                        <i class="fas fa-share"></i> 分享相册
+                    </button>
+                    <button class="action-btn btn-secondary" onclick="generateNew()">
+                        <i class="fas fa-refresh"></i> 重新生成
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="messageArea"></div>
+    </div>
+
+    <script>
+        let currentAlbum = null;
+        let userId = null;
+
+        // 获取API基础URL
+        async function getAPIBaseURL() {
+            try {
+                const response = await fetch('/api/config/environment');
+                const config = await response.json();
+                return config.success ? config.api_base_url : 'http://localhost:8001';
+            } catch (error) {
+                console.error('获取API配置失败:', error);
+                return 'http://localhost:8001';
+            }
+        }
+
+        // 填充示例
+        function fillExample(text) {
+            document.getElementById('userPrompt').value = text;
+        }
+
+        // 生成用户ID
+        function generateUserId() {
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            }
+            return userId;
+        }
+
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            const messageArea = document.getElementById('messageArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${message}`;
+            
+            messageArea.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // 模拟处理步骤
+        function simulateProcessingSteps() {
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            let currentStep = 0;
+
+            const interval = setInterval(() => {
+                if (currentStep > 0) {
+                    document.getElementById(steps[currentStep - 1]).classList.remove('active');
+                    document.getElementById(steps[currentStep - 1]).classList.add('completed');
+                }
+                
+                if (currentStep < steps.length) {
+                    document.getElementById(steps[currentStep]).classList.add('active');
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                    // 最后一步完成
+                    document.getElementById(steps[steps.length - 1]).classList.remove('active');
+                    document.getElementById(steps[steps.length - 1]).classList.add('completed');
+                }
+            }, 2000);
+
+            return interval;
+        }
+
+        // 重置处理步骤
+        function resetProcessingSteps() {
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            steps.forEach(stepId => {
+                const step = document.getElementById(stepId);
+                step.classList.remove('active', 'completed');
+            });
+        }
+
+        // 生成相册
+        async function generateAlbum() {
+            const userPrompt = document.getElementById('userPrompt').value.trim();
+            
+            if (!userPrompt) {
+                showMessage('请输入您的旅行想法', 'error');
+                return;
+            }
+
+            const generateBtn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loading');
+            const processingSteps = document.getElementById('processingSteps');
+            const resultSection = document.getElementById('resultSection');
+
+            // 显示加载状态
+            generateBtn.disabled = true;
+            loading.classList.add('active');
+            processingSteps.classList.add('active');
+            resultSection.classList.remove('active');
+            resetProcessingSteps();
+
+            // 开始模拟处理步骤
+            const stepInterval = simulateProcessingSteps();
+
+            try {
+                const apiBaseURL = await getAPIBaseURL();
+                const response = await fetch(`${apiBaseURL}/api/generate-album`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_prompt: userPrompt,
+                        user_id: generateUserId(),
+                        language: 'zh-CN'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.album) {
+                    currentAlbum = result.album;
+                    displayAlbum(result.album);
+                    showMessage('相册生成成功！', 'success');
+                } else {
+                    throw new Error(result.error || '生成失败');
+                }
+
+            } catch (error) {
+                console.error('生成相册失败:', error);
+                showMessage(`生成失败: ${error.message}`, 'error');
+            } finally {
+                // 清理加载状态
+                clearInterval(stepInterval);
+                generateBtn.disabled = false;
+                loading.classList.remove('active');
+                processingSteps.classList.remove('active');
+                
+                // 完成所有步骤
+                setTimeout(() => {
+                    const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+                    steps.forEach(stepId => {
+                        const step = document.getElementById(stepId);
+                        step.classList.remove('active');
+                        step.classList.add('completed');
+                    });
+                }, 500);
+            }
+        }
+
+        // 显示相册
+        function displayAlbum(album) {
+            const resultSection = document.getElementById('resultSection');
+            const albumTitle = document.getElementById('albumTitle');
+            const albumDescription = document.getElementById('albumDescription');
+            const albumMeta = document.getElementById('albumMeta');
+            const attractionsGrid = document.getElementById('attractionsGrid');
+
+            // 显示相册标题和描述
+            albumTitle.textContent = album.title || '未命名相册';
+            albumDescription.textContent = album.description || '暂无描述';
+
+            // 显示元数据
+            const metadata = album.metadata || {};
+            albumMeta.innerHTML = `
+                <div class="meta-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${metadata.total_attractions || 0} 个景点</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>${metadata.estimated_duration || '待定'}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-star"></i>
+                    <span>${metadata.difficulty_level || '轻松'}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-wallet"></i>
+                    <span>${metadata.budget_estimate || '待估算'}</span>
+                </div>
+            `;
+
+            // 显示景点列表
+            attractionsGrid.innerHTML = '';
+            const attractions = album.attractions || [];
+            
+            attractions.forEach(attraction => {
+                const attractionCard = createAttractionCard(attraction);
+                attractionsGrid.appendChild(attractionCard);
+            });
+
+            // 显示结果区域
+            resultSection.classList.add('active');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 创建景点卡片
+        function createAttractionCard(attraction) {
+            const card = document.createElement('div');
+            card.className = 'attraction-card';
+
+            const imageUrl = attraction.image || attraction.images?.[0]?.url || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400';
+            
+            card.innerHTML = `
+                <img src="${imageUrl}" alt="${attraction.name}" class="attraction-image" 
+                     onerror="this.src='https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400'">
+                <div class="attraction-content">
+                    <div class="attraction-name">${attraction.name || '未知景点'}</div>
+                    <div class="attraction-category">${attraction.category || '景点'}</div>
+                    <div class="attraction-description">
+                        ${attraction.detailed_description || attraction.description || '暂无描述'}
+                    </div>
+                    <div class="attraction-details">
+                        <div class="detail-row">
+                            <span class="detail-label">开放时间</span>
+                            <span class="detail-value">${attraction.opening_hours || '详询景点'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">门票价格</span>
+                            <span class="detail-value">${attraction.ticket_price || '详询景点'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">预订方式</span>
+                            <span class="detail-value">${attraction.booking_method || '现场购票'}</span>
+                        </div>
+                        ${attraction.best_time ? `
+                        <div class="detail-row">
+                            <span class="detail-label">最佳时间</span>
+                            <span class="detail-value">${attraction.best_time}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 保存相册
+        async function saveAlbum() {
+            if (!currentAlbum) {
+                showMessage('没有可保存的相册', 'error');
+                return;
+            }
+
+            try {
+                const apiBaseURL = await getAPIBaseURL();
+                const response = await fetch(`${apiBaseURL}/api/save-album`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        album_data: currentAlbum,
+                        user_id: generateUserId(),
+                        access_level: 'public'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('相册保存成功！', 'success');
+                } else {
+                    throw new Error(result.error || '保存失败');
+                }
+
+            } catch (error) {
+                console.error('保存相册失败:', error);
+                showMessage(`保存失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 分享相册
+        function shareAlbum() {
+            if (!currentAlbum) {
+                showMessage('没有可分享的相册', 'error');
+                return;
+            }
+
+            const shareData = {
+                title: currentAlbum.title || '我的旅游相册',
+                text: currentAlbum.description || '来看看我的AI生成的旅游规划！',
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                navigator.share(shareData);
+            } else {
+                // 备用分享方式
+                const shareText = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showMessage('分享链接已复制到剪贴板！', 'success');
+                });
+            }
+        }
+
+        // 重新生成
+        function generateNew() {
+            document.getElementById('userPrompt').value = '';
+            document.getElementById('resultSection').classList.remove('active');
+            currentAlbum = null;
+            document.getElementById('userPrompt').focus();
+        }
+
+        // 测试API连接
+        async function testAPI() {
+            try {
+                const apiBaseURL = await getAPIBaseURL();
+                const response = await fetch(`${apiBaseURL}/api/health`);
+                const result = await response.json();
+
+                if (result.status === 'healthy') {
+                    showMessage('API连接正常', 'success');
+                } else {
+                    showMessage('API连接异常', 'error');
+                }
+            } catch (error) {
+                showMessage('无法连接到API服务', 'error');
+            }
+        }
+
+        // 系统健康检查
+        async function checkHealth() {
+            try {
+                const apiBaseURL = await getAPIBaseURL();
+                const response = await fetch(`${apiBaseURL}/api/camel-health`);
+                const result = await response.json();
+
+                if (result.success && result.data.overall === 'healthy') {
+                    showMessage('所有系统运行正常', 'success');
+                } else {
+                    showMessage('部分系统存在问题', 'error');
+                }
+            } catch (error) {
+                showMessage('健康检查失败', 'error');
+            }
+        }
+
+        // 事件监听
+        document.getElementById('generateBtn').addEventListener('click', generateAlbum);
+        
+        document.getElementById('userPrompt').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateAlbum();
+            }
+        });
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('userPrompt').focus();
+        });
+    </script>
+</body>
+</html>

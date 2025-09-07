@@ -20,6 +20,8 @@ from global_cities_db import GlobalCitiesDB
 from gemini_service import gemini_service
 from doro_service import doro_service
 from spot_api_service import spot_api_service
+from album_orchestrator import get_album_orchestrator
+from vector_database import get_vector_database
 from fastapi import File, UploadFile, Form
 from fastapi.responses import FileResponse, Response
 import tempfile
@@ -2143,6 +2145,262 @@ async def explore_direction_supabase(request: ExploreRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Supabase数据获取错误: {str(e)}")
+
+# ================== CAMEL多智能体相册生成端点 ==================
+
+class OneClickAlbumRequest(BaseModel):
+    user_prompt: str
+    user_id: Optional[str] = None
+    language: Optional[str] = "zh-CN"
+
+class OneClickAlbumResponse(BaseModel):
+    success: bool
+    message: str
+    album: Optional[Dict] = None
+    user_id: Optional[str] = None
+    error: Optional[str] = None
+
+@app.post("/api/generate-album", response_model=OneClickAlbumResponse)
+async def generate_album_from_prompt(request: OneClickAlbumRequest):
+    """
+    一句话生成旅游导航图相册
+    
+    使用CAMEL多智能体系统和向量数据库实现智能旅游规划
+    """
+    try:
+        logger.info(f"收到一句话生成相册请求: {request.user_prompt}")
+        
+        # 获取多智能体编排器
+        orchestrator = get_album_orchestrator()
+        
+        # 生成相册
+        result = await orchestrator.generate_album_from_prompt(
+            user_prompt=request.user_prompt,
+            user_id=request.user_id
+        )
+        
+        if result.get('success'):
+            return OneClickAlbumResponse(
+                success=True,
+                message=f"成功生成旅游相册：{result['album'].get('title', '未命名相册')}",
+                album=result['album'],
+                user_id=result.get('user_id')
+            )
+        else:
+            return OneClickAlbumResponse(
+                success=False,
+                message="相册生成失败",
+                error=result.get('error', '未知错误')
+            )
+            
+    except Exception as e:
+        logger.error(f"一句话生成相册失败: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        return OneClickAlbumResponse(
+            success=False,
+            message="系统错误",
+            error=f"相册生成失败: {str(e)}"
+        )
+
+@app.get("/api/quick-recommendations")
+async def get_quick_recommendations(
+    latitude: float,
+    longitude: float,
+    interests: str = "",
+    limit: int = 5
+):
+    """
+    快速景点推荐
+    
+    基于位置和兴趣快速推荐景点，不需要完整的相册生成流程
+    """
+    try:
+        logger.info(f"快速推荐请求: 位置=({latitude}, {longitude}), 兴趣={interests}")
+        
+        # 解析兴趣列表
+        interests_list = [interest.strip() for interest in interests.split(',') if interest.strip()]
+        
+        # 获取多智能体编排器
+        orchestrator = get_album_orchestrator()
+        
+        # 生成快速推荐
+        result = await orchestrator.generate_quick_recommendations(
+            location=(latitude, longitude),
+            interests=interests_list,
+            limit=limit
+        )
+        
+        return {
+            "success": result.get('success', False),
+            "data": result.get('recommendations', []),
+            "message": f"找到 {len(result.get('recommendations', []))} 个推荐景点"
+        }
+        
+    except Exception as e:
+        logger.error(f"快速推荐失败: {e}")
+        return {
+            "success": False,
+            "error": f"推荐生成失败: {str(e)}"
+        }
+
+@app.get("/api/camel-health")
+async def camel_health_check():
+    """CAMEL多智能体系统健康检查"""
+    try:
+        orchestrator = get_album_orchestrator()
+        health_status = await orchestrator.health_check()
+        
+        return {
+            "success": True,
+            "data": health_status
+        }
+        
+    except Exception as e:
+        logger.error(f"CAMEL健康检查失败: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "overall": "error",
+                "message": "健康检查失败"
+            }
+        }
+
+@app.post("/api/vector-search")
+async def vector_similarity_search(
+    query: str,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    radius_km: float = 50,
+    limit: int = 10,
+    threshold: float = 0.7
+):
+    """
+    向量相似度搜索景点
+    
+    使用语义搜索找到与查询最相关的景点
+    """
+    try:
+        logger.info(f"向量搜索请求: {query}")
+        
+        # 获取向量数据库
+        vector_db = get_vector_database()
+        
+        # 执行搜索
+        if latitude is not None and longitude is not None:
+            results = await vector_db.search_attractions_by_semantic(
+                query=query,
+                location=(latitude, longitude),
+                radius_km=radius_km,
+                limit=limit
+            )
+        else:
+            results = await vector_db.similarity_search(
+                query=query,
+                limit=limit,
+                threshold=threshold
+            )
+        
+        return {
+            "success": True,
+            "data": results,
+            "count": len(results),
+            "message": f"找到 {len(results)} 个相关景点"
+        }
+        
+    except Exception as e:
+        logger.error(f"向量搜索失败: {e}")
+        return {
+            "success": False,
+            "error": f"搜索失败: {str(e)}"
+        }
+
+@app.post("/api/batch-process-vectors")
+async def batch_process_attraction_vectors(batch_size: int = 10):
+    """
+    批量处理景点向量
+    
+    为数据库中的景点生成向量索引（管理员功能）
+    """
+    try:
+        logger.info(f"开始批量处理景点向量，批次大小: {batch_size}")
+        
+        # 获取向量数据库
+        vector_db = get_vector_database()
+        
+        # 初始化向量表
+        await vector_db.initialize_vector_tables()
+        
+        # 批量处理
+        await vector_db.batch_process_attractions(batch_size=batch_size)
+        
+        return {
+            "success": True,
+            "message": "批量向量处理完成"
+        }
+        
+    except Exception as e:
+        logger.error(f"批量处理向量失败: {e}")
+        return {
+            "success": False,
+            "error": f"批量处理失败: {str(e)}"
+        }
+
+# ================== 相册管理端点 ==================
+
+class SaveAlbumRequest(BaseModel):
+    album_data: Dict
+    user_id: str
+    access_level: str = "public"
+
+@app.post("/api/save-album")
+async def save_generated_album(request: SaveAlbumRequest):
+    """保存生成的相册到数据库"""
+    try:
+        album_data = request.album_data
+        
+        # 保存到Supabase
+        saved_album = await spot_api_service.create_album(
+            creator_id=request.user_id,
+            title=album_data.get('title', '未命名相册'),
+            description=album_data.get('description', ''),
+            access_level=request.access_level
+        )
+        
+        return {
+            "success": True,
+            "data": saved_album,
+            "message": "相册保存成功"
+        }
+        
+    except Exception as e:
+        logger.error(f"保存相册失败: {e}")
+        return {
+            "success": False,
+            "error": f"保存失败: {str(e)}"
+        }
+
+@app.get("/api/my-albums/{user_id}")
+async def get_user_generated_albums(user_id: str):
+    """获取用户生成的相册列表"""
+    try:
+        albums = await spot_api_service.get_user_albums(user_id)
+        
+        return {
+            "success": True,
+            "data": albums,
+            "count": len(albums),
+            "message": f"找到 {len(albums)} 个相册"
+        }
+        
+    except Exception as e:
+        logger.error(f"获取用户相册失败: {e}")
+        return {
+            "success": False,
+            "error": f"获取相册失败: {str(e)}"
+        }
 
 # 包含认证路由
 app.include_router(auth_router, prefix="/api/auth", tags=["用户认证"])
