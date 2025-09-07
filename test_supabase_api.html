@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase API 测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+        .test-section h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #4299e1;
+            padding-bottom: 10px;
+        }
+        .test-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-group label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .input-group input, .input-group select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #3182ce;
+        }
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #38a169;
+        }
+        .btn-warning {
+            background: #ed8936;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #dd6b20;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .results.loading {
+            background: #fef5e7;
+            border: 1px solid #f6e05e;
+            color: #744210;
+        }
+        .results.success {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #22543d;
+        }
+        .results.error {
+            background: #fed7d7;
+            border: 1px solid #fc8181;
+            color: #742a2a;
+        }
+        .attraction-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .attraction-card h3 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+        }
+        .attraction-card p {
+            margin: 5px 0;
+            color: #4a5568;
+        }
+        .attraction-card .meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #718096;
+            margin-top: 10px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.healthy {
+            background: #48bb78;
+        }
+        .status-indicator.error {
+            background: #f56565;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗄️ Supabase API 测试面板</h1>
+            <p>测试Spot地图相册系统的Supabase数据库API接口</p>
+        </div>
+
+        <!-- 健康检查 -->
+        <div class="test-section">
+            <h2>🩺 服务健康检查</h2>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="testHealthCheck()">检查服务状态</button>
+            </div>
+            <div id="health-results" class="results"></div>
+        </div>
+
+        <!-- 附近景点查询 -->
+        <div class="test-section">
+            <h2>📍 附近景点查询</h2>
+            <div class="test-controls">
+                <div class="input-group">
+                    <label>纬度</label>
+                    <input type="number" id="lat" value="39.9042" step="0.0001" placeholder="纬度">
+                </div>
+                <div class="input-group">
+                    <label>经度</label>
+                    <input type="number" id="lng" value="116.4074" step="0.0001" placeholder="经度">
+                </div>
+                <div class="input-group">
+                    <label>搜索半径 (km)</label>
+                    <input type="number" id="radius" value="50" min="1" max="1000" placeholder="搜索半径">
+                </div>
+                <button class="btn btn-success" onclick="testNearbyAttractions()">查询附近景点</button>
+            </div>
+            <div id="nearby-results" class="results"></div>
+        </div>
+
+        <!-- 所有景点查询 -->
+        <div class="test-section">
+            <h2>🌍 所有景点查询</h2>
+            <div class="test-controls">
+                <button class="btn btn-success" onclick="testAllAttractions()">获取所有景点</button>
+            </div>
+            <div id="all-results" class="results"></div>
+        </div>
+
+        <!-- 按类别查询 -->
+        <div class="test-section">
+            <h2>🏛️ 按类别查询</h2>
+            <div class="test-controls">
+                <div class="input-group">
+                    <label>景点类别</label>
+                    <select id="category">
+                        <option value="文化古迹">文化古迹</option>
+                        <option value="自然景观">自然景观</option>
+                        <option value="现代建筑">现代建筑</option>
+                        <option value="休闲娱乐">休闲娱乐</option>
+                        <option value="宗教建筑">宗教建筑</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" onclick="testAttractionsByCategory()">按类别查询</button>
+            </div>
+            <div id="category-results" class="results"></div>
+        </div>
+
+        <!-- 按城市查询 -->
+        <div class="test-section">
+            <h2>🏙️ 按城市查询</h2>
+            <div class="test-controls">
+                <div class="input-group">
+                    <label>城市名称</label>
+                    <input type="text" id="city" value="北京市东城区" placeholder="输入城市名称">
+                </div>
+                <button class="btn btn-success" onclick="testAttractionsByCity()">按城市查询</button>
+            </div>
+            <div id="city-results" class="results"></div>
+        </div>
+
+        <!-- 搜索功能 -->
+        <div class="test-section">
+            <h2>🔍 景点搜索</h2>
+            <div class="test-controls">
+                <div class="input-group">
+                    <label>搜索关键词</label>
+                    <input type="text" id="search-query" value="故宫" placeholder="输入搜索关键词">
+                </div>
+                <button class="btn btn-success" onclick="testSearchAttractions()">搜索景点</button>
+            </div>
+            <div id="search-results" class="results"></div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="test-section">
+            <h2>📊 统计信息</h2>
+            <div class="test-controls">
+                <button class="btn btn-warning" onclick="testStatistics()">获取统计信息</button>
+            </div>
+            <div id="stats-results" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        // API基础URL配置
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 
+            'http://localhost:8001' : 'https://spot.gitagent.io';
+
+        // 通用API调用函数
+        async function callAPI(endpoint, options = {}) {
+            try {
+                const url = `${API_BASE_URL}${endpoint}`;
+                console.log(`调用API: ${url}`);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${data.detail || response.statusText}`);
+                }
+
+                return { success: true, data };
+            } catch (error) {
+                console.error('API调用失败:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // 显示结果的通用函数
+        function showResults(containerId, result, formatter = null) {
+            const container = document.getElementById(containerId);
+            
+            if (result.success) {
+                container.className = 'results success';
+                if (formatter) {
+                    container.innerHTML = formatter(result.data);
+                } else {
+                    container.innerHTML = `<pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                }
+            } else {
+                container.className = 'results error';
+                container.innerHTML = `<strong>错误:</strong> ${result.error}`;
+            }
+        }
+
+        // 显示加载状态
+        function showLoading(containerId, message = '加载中...') {
+            const container = document.getElementById(containerId);
+            container.className = 'results loading';
+            container.innerHTML = `<strong>${message}</strong>`;
+        }
+
+        // 健康检查
+        async function testHealthCheck() {
+            showLoading('health-results', '检查服务状态...');
+            const result = await callAPI('/api/spot/health');
+            
+            showResults('health-results', result, (data) => {
+                const status = data.data?.status || 'unknown';
+                const isHealthy = status === 'healthy';
+                const indicator = isHealthy ? 
+                    '<span class="status-indicator healthy"></span>' : 
+                    '<span class="status-indicator error"></span>';
+                
+                return `
+                    <div>
+                        <h3>${indicator}服务状态: ${status}</h3>
+                        <p><strong>数据库连接:</strong> ${data.data?.database_connected ? '✅ 已连接' : '❌ 未连接'}</p>
+                        <p><strong>服务名称:</strong> ${data.data?.service || 'N/A'}</p>
+                        <p><strong>版本:</strong> ${data.data?.version || 'N/A'}</p>
+                    </div>
+                `;
+            });
+        }
+
+        // 附近景点查询
+        async function testNearbyAttractions() {
+            const lat = parseFloat(document.getElementById('lat').value);
+            const lng = parseFloat(document.getElementById('lng').value);
+            const radius = parseFloat(document.getElementById('radius').value);
+            
+            if (isNaN(lat) || isNaN(lng) || isNaN(radius)) {
+                showResults('nearby-results', { success: false, error: '请输入有效的数值' });
+                return;
+            }
+            
+            showLoading('nearby-results', '查询附近景点...');
+            const result = await callAPI(`/api/spot/attractions/nearby?latitude=${lat}&longitude=${lng}&radius=${radius}`);
+            
+            showResults('nearby-results', result, formatAttractions);
+        }
+
+        // 所有景点查询
+        async function testAllAttractions() {
+            showLoading('all-results', '获取所有景点...');
+            const result = await callAPI('/api/spot/attractions');
+            
+            showResults('all-results', result, formatAttractions);
+        }
+
+        // 按类别查询
+        async function testAttractionsByCategory() {
+            const category = document.getElementById('category').value;
+            
+            showLoading('category-results', `查询${category}类景点...`);
+            const result = await callAPI(`/api/spot/attractions/category/${encodeURIComponent(category)}`);
+            
+            showResults('category-results', result, formatAttractions);
+        }
+
+        // 按城市查询
+        async function testAttractionsByCity() {
+            const city = document.getElementById('city').value.trim();
+            
+            if (!city) {
+                showResults('city-results', { success: false, error: '请输入城市名称' });
+                return;
+            }
+            
+            showLoading('city-results', `查询${city}的景点...`);
+            const result = await callAPI(`/api/spot/attractions/city/${encodeURIComponent(city)}`);
+            
+            showResults('city-results', result, formatAttractions);
+        }
+
+        // 搜索景点
+        async function testSearchAttractions() {
+            const query = document.getElementById('search-query').value.trim();
+            
+            if (!query || query.length < 2) {
+                showResults('search-results', { success: false, error: '请输入至少2个字符的搜索关键词' });
+                return;
+            }
+            
+            showLoading('search-results', `搜索"${query}"...`);
+            const result = await callAPI(`/api/spot/attractions/search?query=${encodeURIComponent(query)}`);
+            
+            showResults('search-results', result, formatAttractions);
+        }
+
+        // 获取统计信息
+        async function testStatistics() {
+            showLoading('stats-results', '获取统计信息...');
+            const result = await callAPI('/api/spot/statistics');
+            
+            showResults('stats-results', result, (data) => {
+                const stats = data.data;
+                return `
+                    <div>
+                        <h3>📊 数据库统计</h3>
+                        <p><strong>景点总数:</strong> ${stats.total_attractions || 0}</p>
+                        <p><strong>相册总数:</strong> ${stats.total_albums || 0}</p>
+                        
+                        ${stats.attractions_by_category ? `
+                            <h4>按类别统计:</h4>
+                            <ul>
+                                ${Object.entries(stats.attractions_by_category).map(([category, count]) => 
+                                    `<li>${category}: ${count}个</li>`
+                                ).join('')}
+                            </ul>
+                        ` : ''}
+                        
+                        ${stats.attractions_by_country ? `
+                            <h4>按国家统计:</h4>
+                            <ul>
+                                ${Object.entries(stats.attractions_by_country).map(([country, count]) => 
+                                    `<li>${country}: ${count}个</li>`
+                                ).join('')}
+                            </ul>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        // 格式化景点数据显示
+        function formatAttractions(data) {
+            const attractions = data.data || [];
+            const count = data.count || attractions.length;
+            
+            if (attractions.length === 0) {
+                return '<p>没有找到匹配的景点</p>';
+            }
+            
+            return `
+                <div>
+                    <h3>找到 ${count} 个景点:</h3>
+                    ${attractions.map(attraction => `
+                        <div class="attraction-card">
+                            <h3>${attraction.name}</h3>
+                            <p>${attraction.description || '暂无描述'}</p>
+                            <div class="meta">
+                                <span>📍 ${attraction.city}, ${attraction.country}</span>
+                                <span>🏛️ ${attraction.category}</span>
+                                ${attraction.distance ? `<span>📏 ${attraction.distance}km</span>` : ''}
+                                <span>🎫 ${attraction.ticket_price || '价格未知'}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // 页面加载完成后自动执行健康检查
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Supabase API测试页面已加载');
+            console.log('API基础URL:', API_BASE_URL);
+            
+            // 延迟1秒后自动执行健康检查
+            setTimeout(testHealthCheck, 1000);
+        });
+    </script>
+</body>
+</html>

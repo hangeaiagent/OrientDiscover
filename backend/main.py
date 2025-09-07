@@ -19,6 +19,7 @@ from local_attractions_db import local_attractions_db
 from global_cities_db import GlobalCitiesDB
 from gemini_service import gemini_service
 from doro_service import doro_service
+from spot_api_service import spot_api_service
 from fastapi import File, UploadFile, Form
 from fastapi.responses import FileResponse, Response
 import tempfile
@@ -1891,6 +1892,257 @@ async def download_generated_image(filename: str):
     except Exception as e:
         logger.error(f"下载图片时出错: {e}")
         raise HTTPException(status_code=500, detail=f"下载图片失败: {str(e)}")
+
+# ================== Supabase数据库API端点 ==================
+
+@app.get("/api/spot/health")
+async def spot_health_check():
+    """Spot数据库服务健康检查"""
+    try:
+        health_status = await spot_api_service.health_check()
+        return {
+            "success": True,
+            "data": health_status
+        }
+    except Exception as e:
+        logger.error(f"Spot服务健康检查失败: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "status": "error",
+                "database_connected": False
+            }
+        }
+
+@app.get("/api/spot/attractions/nearby")
+async def get_nearby_attractions_from_db(
+    latitude: float,
+    longitude: float,
+    radius: float = 50
+):
+    """从Supabase数据库获取附近景点"""
+    try:
+        attractions = await spot_api_service.get_nearby_attractions(latitude, longitude, radius)
+        return {
+            "success": True,
+            "data": attractions,
+            "count": len(attractions),
+            "message": f"找到 {len(attractions)} 个附近景点"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取附近景点失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取附近景点失败: {str(e)}")
+
+@app.get("/api/spot/attractions")
+async def get_all_attractions_from_db():
+    """从Supabase数据库获取所有景点"""
+    try:
+        attractions = await spot_api_service.get_all_attractions()
+        return {
+            "success": True,
+            "data": attractions,
+            "count": len(attractions),
+            "message": f"获取到 {len(attractions)} 个景点"
+        }
+    except Exception as e:
+        logger.error(f"获取所有景点失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取所有景点失败: {str(e)}")
+
+@app.get("/api/spot/attractions/category/{category}")
+async def get_attractions_by_category_from_db(category: str):
+    """从Supabase数据库根据类别获取景点"""
+    try:
+        attractions = await spot_api_service.get_attractions_by_category(category)
+        return {
+            "success": True,
+            "data": attractions,
+            "count": len(attractions),
+            "message": f"找到 {len(attractions)} 个 {category} 类景点"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"根据类别获取景点失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取景点失败: {str(e)}")
+
+@app.get("/api/spot/attractions/city/{city}")
+async def get_attractions_by_city_from_db(city: str):
+    """从Supabase数据库根据城市获取景点"""
+    try:
+        attractions = await spot_api_service.get_attractions_by_city(city)
+        return {
+            "success": True,
+            "data": attractions,
+            "count": len(attractions),
+            "message": f"找到 {len(attractions)} 个 {city} 的景点"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"根据城市获取景点失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取景点失败: {str(e)}")
+
+@app.get("/api/spot/attractions/search")
+async def search_attractions_from_db(query: str):
+    """从Supabase数据库搜索景点"""
+    try:
+        attractions = await spot_api_service.search_attractions(query)
+        return {
+            "success": True,
+            "data": attractions,
+            "count": len(attractions),
+            "message": f"搜索到 {len(attractions)} 个相关景点"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"搜索景点失败: {e}")
+        raise HTTPException(status_code=500, detail=f"搜索失败: {str(e)}")
+
+@app.post("/api/spot/albums")
+async def create_album_in_db(
+    creator_id: str,
+    title: str,
+    description: str = None,
+    access_level: str = "public"
+):
+    """在Supabase数据库中创建新相册"""
+    try:
+        album = await spot_api_service.create_album(creator_id, title, description, access_level)
+        return {
+            "success": True,
+            "data": album,
+            "message": f"相册 '{title}' 创建成功"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"创建相册失败: {e}")
+        raise HTTPException(status_code=500, detail=f"创建相册失败: {str(e)}")
+
+@app.get("/api/spot/albums/public")
+async def get_public_albums_from_db(limit: int = 20, offset: int = 0):
+    """从Supabase数据库获取公开相册"""
+    try:
+        albums = await spot_api_service.get_public_albums(limit, offset)
+        return {
+            "success": True,
+            "data": albums,
+            "count": len(albums),
+            "message": f"获取到 {len(albums)} 个公开相册"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取公开相册失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取相册失败: {str(e)}")
+
+@app.get("/api/spot/albums/user/{user_id}")
+async def get_user_albums_from_db(user_id: str):
+    """从Supabase数据库获取用户相册"""
+    try:
+        albums = await spot_api_service.get_user_albums(user_id)
+        return {
+            "success": True,
+            "data": albums,
+            "count": len(albums),
+            "message": f"用户有 {len(albums)} 个相册"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取用户相册失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取用户相册失败: {str(e)}")
+
+@app.get("/api/spot/statistics")
+async def get_spot_statistics():
+    """从Supabase数据库获取统计信息"""
+    try:
+        stats = await spot_api_service.get_statistics()
+        return {
+            "success": True,
+            "data": stats,
+            "message": "统计信息获取成功"
+        }
+    except Exception as e:
+        logger.error(f"获取统计信息失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
+
+# 修改现有的explore-real端点以使用新的数据库API
+@app.post("/api/explore-supabase", response_model=ExploreResponse)
+async def explore_direction_supabase(request: ExploreRequest):
+    """使用Supabase数据库探索指定方向的地点"""
+    import time
+    start_time = time.time()
+    
+    try:
+        # 验证输入参数
+        if not (-90 <= request.latitude <= 90):
+            raise HTTPException(status_code=400, detail="纬度必须在-90到90之间")
+        if not (-180 <= request.longitude <= 180):
+            raise HTTPException(status_code=400, detail="经度必须在-180到180之间")
+        if not (0 <= request.heading < 360):
+            raise HTTPException(status_code=400, detail="方向必须在0到360度之间")
+        if request.segment_distance <= 0:
+            raise HTTPException(status_code=400, detail="分段距离必须大于0")
+        
+        # 计算目标距离点的坐标
+        target_distance = request.segment_distance
+        target_point = geod.Direct(
+            request.latitude, 
+            request.longitude, 
+            request.heading, 
+            target_distance * 1000  # 转换为米
+        )
+        
+        target_lat = target_point['lat2']
+        target_lon = target_point['lon2']
+        
+        # 使用新的Supabase API获取附近景点
+        attractions_data = await spot_api_service.get_nearby_attractions(
+            target_lat, target_lon, radius_km=50
+        )
+        
+        # 转换为PlaceInfo对象
+        places = []
+        for attraction in attractions_data:
+            place_info = PlaceInfo(
+                name=attraction['name'],
+                latitude=attraction['latitude'],
+                longitude=attraction['longitude'],
+                distance=attraction.get('distance', target_distance),
+                description=attraction.get('description', ''),
+                image=attraction.get('image'),
+                video=attraction.get('video'),
+                country=attraction.get('country'),
+                city=attraction.get('city'),
+                opening_hours=attraction.get('opening_hours'),
+                ticket_price=attraction.get('ticket_price'),
+                booking_method=attraction.get('booking_method'),
+                category=attraction.get('category')
+            )
+            places.append(place_info)
+        
+        calculation_time = time.time() - start_time
+        
+        logger.info(f"使用Supabase数据库找到 {len(places)} 个景点，耗时 {calculation_time:.2f}秒")
+        
+        return ExploreResponse(
+            places=places,
+            total_distance=target_distance,
+            calculation_time=calculation_time
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Supabase数据探索错误: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Supabase数据获取错误: {str(e)}")
 
 # 包含认证路由
 app.include_router(auth_router, prefix="/api/auth", tags=["用户认证"])

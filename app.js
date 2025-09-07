@@ -614,9 +614,9 @@ async function startExploration() {
         logger.info('正在向后端发送探索请求...');
         const startTime = Date.now();
         
-                // 使用真实数据API端点
-        const apiEndpoint = `${API_BASE_URL}/api/explore-real`;
-        logger.info('使用真实数据源');
+                // 使用Supabase数据库API端点
+        const apiEndpoint = `${API_BASE_URL}/api/explore-supabase`;
+        logger.info('使用Supabase数据库数据源');
         
         // 调用后端API计算路径
         const response = await fetch(apiEndpoint, {
